@@ -1,9 +1,9 @@
 import Head from 'next/head'
-import { listPhotos } from '@/lib/google-photos'
+import { GooglePhotosMediaItem, listMedia } from '@/lib/google-photos'
 
 import styles from '@/styles/Home.module.css'
 
-export default function Home({ photos }) {
+export default function Home({ mediaItems }: { mediaItems: GooglePhotosMediaItem[] }) {
   return (
     <>
       <Head>
@@ -13,8 +13,8 @@ export default function Home({ photos }) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
-        {photos.map((photo) => {
-          return <p key={photo.id}>Photo {photo.id} description: {photo.description}</p>
+        {mediaItems.map(({ id, description }) => {
+          return <p key={id}>Photo {id} description: {description}</p>
         })}
       </main>
     </>
@@ -22,11 +22,18 @@ export default function Home({ photos }) {
 }
 
 export async function getStaticProps() {
-  const { mediaItems } = await listPhotos()
+  let allMediaItems: GooglePhotosMediaItem[] = []
+  let pageToken: string|undefined
+
+  do {
+    const { mediaItems, nextPageToken } = await listMedia({ pageToken })
+    allMediaItems = [...allMediaItems, ...mediaItems]
+    pageToken = nextPageToken
+  } while (pageToken)
 
   return {
     props: {
-      photos: mediaItems,
+      mediaItems: allMediaItems,
     },
   }
 }
