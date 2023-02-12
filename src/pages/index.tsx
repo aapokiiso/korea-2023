@@ -1,9 +1,14 @@
 import Head from 'next/head'
-import { GooglePhotosMediaItem, listMedia } from '@/lib/google-photos'
+import { GooglePhotosMediaItem, listMedia } from '@/lib/google-photos-api'
 
-import styles from '@/styles/Home.module.css'
+import { groupByDay } from '@/utils/sort-media-items'
+import MediaItemGroup from '@/components/MediaItemGroup'
 
 export default function Home({ mediaItems }: { mediaItems: GooglePhotosMediaItem[] }) {
+  const mediaItemsByDay = groupByDay(mediaItems)
+
+  const sortedDays = Object.keys(mediaItemsByDay).sort().reverse()
+
   return (
     <>
       <Head>
@@ -12,10 +17,13 @@ export default function Home({ mediaItems }: { mediaItems: GooglePhotosMediaItem
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className={styles.main}>
-        {mediaItems.map(({ id, description }) => {
-          return <p key={id}>Photo {id} description: {description}</p>
-        })}
+      <main className="container mx-auto grid pointer-events-none">
+        <div className="w-full max-w-md justify-self-end pointer-events-auto">
+          <h1>Image feed</h1>
+          {sortedDays.map(day => {
+            return (<MediaItemGroup key={day} title={day} items={mediaItemsByDay[day]} />)
+          })}
+        </div>
       </main>
     </>
   )
