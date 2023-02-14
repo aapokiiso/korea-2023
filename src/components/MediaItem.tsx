@@ -1,6 +1,7 @@
 import { GooglePhotosMediaItem } from '@/lib/google-photos-api'
 import Image from 'next/image'
 import { formatInDisplayTimeZone } from '@/utils/date'
+import Card from './Card'
 
 export default function MediaItem({ item }: {item: GooglePhotosMediaItem}) {
   const aspectRatio = Number(item.mediaMetadata.height) / Number(item.mediaMetadata.width)
@@ -10,7 +11,7 @@ export default function MediaItem({ item }: {item: GooglePhotosMediaItem}) {
   const timestamp = item.mediaMetadata.creationTime
 
   return (
-    <article>
+    <Card tagName="article" className="my-4">
       <h3>
         {formatInDisplayTimeZone(timestamp, 'HH:mm')}
       </h3>
@@ -18,6 +19,6 @@ export default function MediaItem({ item }: {item: GooglePhotosMediaItem}) {
         <Image src={item.baseUrl + '=w' + width} alt="" width={width} height={Math.round(width*aspectRatio)} />
         {item.description && <figcaption>{item.description}</figcaption>}
       </figure>
-    </article>
+    </Card>
   )
 }
