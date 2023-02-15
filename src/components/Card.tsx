@@ -4,7 +4,7 @@ export default function Card({ tagName = 'div', className, children }: PropsWith
   return React.createElement(
     tagName,
     {
-      className: 'rounded-lg bg-white border border-gray-200 drop-shadow overflow-hidden ' + className,
+      className: 'rounded-2xl bg-white border border-gray-200 shadow-lg overflow-hidden ' + className,
     },
     children
   )

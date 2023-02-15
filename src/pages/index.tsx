@@ -18,8 +18,8 @@ export default function Home({ mediaItems }: { mediaItems: GooglePhotosMediaItem
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="container mx-auto p-4 grid pointer-events-none">
-        <div className="w-full max-w-md justify-self-end pointer-events-auto">
+      <main className="xl:container mx-auto p-4 grid pointer-events-none">
+        <div className="w-full max-w-lg justify-self-end pointer-events-auto">
           <Card tagName="header" className="p-4">
             <h1 className="text-3xl">Site title</h1>
             <p>Mauris sed libero. Suspendisse facilisis nulla in lacinia laoreet, lorem velit accumsan velit vel mattis libero nisl et sem. Proin interdum maecenas massa turpis sagittis in, interdum non lobortis vitae massa.</p>

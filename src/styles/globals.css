@@ -13,7 +13,8 @@ body {
   max-width: 100vw;
   max-height: 100vh;
   overflow-x: hidden;
-  font-family: monospace;
+  /* Having just "font-family: monospace;"  changes root font-size to 13px as a side-effect. */
+  font-family: monospace, sans-serif;
 }
 
 a {
