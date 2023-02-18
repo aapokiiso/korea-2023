@@ -3,14 +3,14 @@ import { sortByTimeDescending } from '@/utils/sort-media-items'
 import { ChevronRightIcon } from '@heroicons/react/20/solid'
 import { formatInTimeZone } from 'date-fns-tz'
 import { getLocationLabel } from '../lib/media-item-enrichment'
-import MediaItem from './MediaItem'
+import TimelineItem from './TimelineItem'
 
-export default function MediaItemGroup({ date, items }: { date: string, items: GooglePhotosMediaItem[] }) {
+export default function TimelineItemGroup({ date, mediaItems }: { date: string, mediaItems: GooglePhotosMediaItem[] }) {
   const dateTitle = formatInTimeZone(date, 'UTC', 'E, MMM d')
-  const sortedItems = sortByTimeDescending(items)
+  const sortedMediaItems = sortByTimeDescending(mediaItems)
 
-  const startLocationLabel = sortedItems.length ? getLocationLabel(sortedItems[0]) : null
-  const endLocationLabel = sortedItems.length ? getLocationLabel(sortedItems[sortedItems.length - 1]) : null
+  const startLocationLabel = sortedMediaItems.length ? getLocationLabel(sortedMediaItems[0]) : null
+  const endLocationLabel = sortedMediaItems.length ? getLocationLabel(sortedMediaItems[sortedMediaItems.length - 1]) : null
 
   const locationLabel = startLocationLabel && endLocationLabel
     ? (startLocationLabel !== endLocationLabel ? `${startLocationLabel} - ${endLocationLabel}` : startLocationLabel)
@@ -29,7 +29,7 @@ export default function MediaItemGroup({ date, items }: { date: string, items: G
         </button>
       </header>
       <div className="pl-4 pr-2">
-        {sortedItems.map(item => <MediaItem key={item.id} item={item} />)}
+        {sortedMediaItems.map(mediaItem => <TimelineItem key={mediaItem.id} mediaItem={mediaItem} />)}
       </div>
     </div>
   )

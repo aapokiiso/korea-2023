@@ -2,7 +2,7 @@ import Head from 'next/head'
 import { GooglePhotosMediaItem, listAlbumMedia } from '@/lib/google-photos-api'
 
 import { groupByDay } from '@/utils/sort-media-items'
-import MediaItemGroup from '@/components/MediaItemGroup'
+import TimelineItemGroup from '@/components/TimelineItemGroup'
 import { getCoordinates, getLocationLabel } from '../lib/media-item-enrichment'
 import { cacheItems } from '../lib/media-cache'
 
@@ -26,7 +26,7 @@ export default function Home({ mediaItems }: { mediaItems: GooglePhotosMediaItem
             <p>Mauris sed libero. Suspendisse facilisis nulla in lacinia laoreet, lorem velit accumsan velit vel mattis libero nisl et sem. Proin interdum maecenas massa turpis sagittis in, interdum non lobortis vitae massa.</p>
           </header>
           {sortedDays.map(day => {
-            return (<MediaItemGroup key={day} date={day} items={mediaItemsByDay[day]} />)
+            return (<TimelineItemGroup key={day} date={day} mediaItems={mediaItemsByDay[day]} />)
           })}
         </div>
       </main>
