@@ -12,7 +12,7 @@ export default function TimelineItem({ mediaItem }: { mediaItem: GooglePhotosMed
   const description = getDescription(mediaItem)
 
   return (
-    <article className="my-4 p-2 pt-4 rounded-2xl bg-white border border-gray-200 shadow-lg overflow-hidden">
+    <article className="my-4 p-2 pt-4 rounded-2xl bg-neutral-200 shadow-lg overflow-hidden">
       <Image
         src={`/media/timeline/${mediaItem.id}`}
         alt=""

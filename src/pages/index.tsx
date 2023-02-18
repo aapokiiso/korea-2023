@@ -5,6 +5,7 @@ import { groupByDay } from '@/utils/sort-media-items'
 import TimelineItemGroup from '@/components/TimelineItemGroup'
 import { getCoordinates, getLocationLabel } from '../lib/media-item-enrichment'
 import { cacheItems } from '../lib/media-cache'
+import JourneyMap from '../components/JourneyMap'
 
 export default function Home({ mediaItems }: { mediaItems: GooglePhotosMediaItem[] }) {
   const mediaItemsByDay = groupByDay(mediaItems)
@@ -19,7 +20,8 @@ export default function Home({ mediaItems }: { mediaItems: GooglePhotosMediaItem
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="xl:container mx-auto p-4 grid pointer-events-none">
+      <JourneyMap mediaItems={mediaItems} />
+      <main className="xl:container mx-auto p-4 grid pointer-events-none relative z-10">
         <div className="w-full max-w-lg justify-self-end pointer-events-auto">
           <header className="p-4 rounded bg-white border border-gray-200 shadow-lg">
             <h1 className="text-3xl">Site title</h1>
