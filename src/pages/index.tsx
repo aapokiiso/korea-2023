@@ -1,8 +1,10 @@
 import Head from 'next/head'
-import { GooglePhotosMediaItem, listMedia } from '@/lib/google-photos-api'
+import { GooglePhotosMediaItem, listAlbumMedia } from '@/lib/google-photos-api'
 
 import { groupByDay } from '@/utils/sort-media-items'
 import MediaItemGroup from '@/components/MediaItemGroup'
+import { getCoordinates, getLocationLabel } from '../lib/media-item-enrichment'
+import { cacheItems } from '../lib/media-cache'
 
 export default function Home({ mediaItems }: { mediaItems: GooglePhotosMediaItem[] }) {
   const mediaItemsByDay = groupByDay(mediaItems)
@@ -33,18 +35,30 @@ export default function Home({ mediaItems }: { mediaItems: GooglePhotosMediaItem
 }
 
 export async function getStaticProps() {
-  let allMediaItems: GooglePhotosMediaItem[] = []
-  let pageToken: string|undefined
+  const albumId = process.env.GOOGLE_PHOTOS_ALBUM_ID
 
-  do {
-    const { mediaItems, nextPageToken } = await listMedia({ pageToken })
-    allMediaItems = [...allMediaItems, ...mediaItems]
-    pageToken = nextPageToken
-  } while (pageToken)
+  let mediaItems: GooglePhotosMediaItem[] = []
+  if (albumId) {
+    let allMediaItems: GooglePhotosMediaItem[] = []
+    let pageToken: string|undefined
+
+    do {
+      const { mediaItems: pageMediaItems, nextPageToken } = await listAlbumMedia(albumId, { pageToken })
+      allMediaItems = [...allMediaItems, ...pageMediaItems]
+      pageToken = nextPageToken
+    } while (pageToken)
+
+    const validMediaItems = allMediaItems
+      .filter(mediaItem => getLocationLabel(mediaItem) && getCoordinates(mediaItem))
+
+    await cacheItems(validMediaItems)
+
+    mediaItems = validMediaItems
+  }
 
   return {
     props: {
-      mediaItems: allMediaItems,
+      mediaItems,
     },
   }
 }

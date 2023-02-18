@@ -59,7 +59,7 @@ client.setCredentials({
   refresh_token: process.env.GOOGLE_OAUTH2_CLIENT_REFRESH_TOKEN,
 })
 
-export async function listMedia(options?: GooglePhotosListMediaOptions): Promise<GooglePhotosListMediaResponse> {
+export const listAlbumMedia = async (albumId: string, options?: GooglePhotosListMediaOptions): Promise<GooglePhotosListMediaResponse> => {
   const { token } = await client.getAccessToken()
 
   const response = await fetch('https://photoslibrary.googleapis.com/v1/mediaItems:search', {
@@ -70,10 +70,18 @@ export async function listMedia(options?: GooglePhotosListMediaOptions): Promise
     },
     body: JSON.stringify({
       pageSize: 100,
-      albumId: process.env.GOOGLE_PHOTOS_ALBUM_ID,
+      albumId,
       pageToken: options?.pageToken,
     }),
   })
 
   return response.json()
+}
+
+export const isPhoto = (mediaItem: GooglePhotosMediaItem): boolean => {
+  return mediaItem.mediaMetadata.hasOwnProperty('photo')
+}
+
+export const isVideo = (mediaItem: GooglePhotosMediaItem): boolean => {
+  return mediaItem.mediaMetadata.hasOwnProperty('video')
 }

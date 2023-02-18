@@ -3,11 +3,15 @@ const nextConfig = {
   reactStrictMode: true,
   pageExtensions: ['tsx', 'ts'],
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         hostname: '*.googleusercontent.com',
       },
     ],
+  },
+  serverRuntimeConfig: {
+    publicDir: `${__dirname}/public`,
   },
 }
 
