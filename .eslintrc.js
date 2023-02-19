@@ -9,5 +9,6 @@ module.exports = {
     'quotes': ['error', 'single'],
     'semi': ['error', 'never'],
     'indent': ['error', 2],
+    'space-infix-ops': ['error'],
   },
 }

@@ -19,6 +19,9 @@ module.exports = {
           900: '#97042c',
         },
       },
+      transitionProperty: {
+        mapMarkerSize: 'width, height',
+      },
     },
   },
   plugins: [],

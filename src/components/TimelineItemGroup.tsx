@@ -5,12 +5,12 @@ import { formatInTimeZone } from 'date-fns-tz'
 import { getLocationLabel } from '../lib/media-item-enrichment'
 import TimelineItem from './TimelineItem'
 
-export default function TimelineItemGroup({ date, mediaItems }: { date: string, mediaItems: GooglePhotosMediaItem[] }) {
+export default function TimelineItemGroup({ date, items, activeItemId, itemVisibilityObserver }: { date: string, items: GooglePhotosMediaItem[], activeItemId?: string, itemVisibilityObserver?: IntersectionObserver }) {
   const dateTitle = formatInTimeZone(date, 'UTC', 'E, MMM d')
-  const sortedMediaItems = sortByTimeDescending(mediaItems)
+  const sortedItems = sortByTimeDescending(items)
 
-  const startLocationLabel = sortedMediaItems.length ? getLocationLabel(sortedMediaItems[0]) : null
-  const endLocationLabel = sortedMediaItems.length ? getLocationLabel(sortedMediaItems[sortedMediaItems.length - 1]) : null
+  const startLocationLabel = sortedItems.length ? getLocationLabel(sortedItems[0]) : null
+  const endLocationLabel = sortedItems.length ? getLocationLabel(sortedItems[sortedItems.length - 1]) : null
 
   const locationLabel = startLocationLabel && endLocationLabel
     ? (startLocationLabel !== endLocationLabel ? `${startLocationLabel} - ${endLocationLabel}` : startLocationLabel)
@@ -29,7 +29,7 @@ export default function TimelineItemGroup({ date, mediaItems }: { date: string, 
         </button>
       </header>
       <div className="pl-4 pr-2">
-        {sortedMediaItems.map(mediaItem => <TimelineItem key={mediaItem.id} mediaItem={mediaItem} />)}
+        {sortedItems.map(item => <TimelineItem key={item.id} item={item} isActive={activeItemId === item.id} visibilityObserver={itemVisibilityObserver} />)}
       </div>
     </div>
   )
