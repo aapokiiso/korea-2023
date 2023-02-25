@@ -6,6 +6,7 @@ import { cacheItems } from '../lib/media-cache'
 import JourneyMap from '../components/JourneyMap'
 import { useState } from 'react'
 import Timeline from '../components/Timeline'
+import { sortByTimeDescending } from '../utils/sort-media-items'
 
 export default function Home({ mediaItems }: { mediaItems: GooglePhotosMediaItem[] }) {
   const [activeMediaItemId, setActiveMediaItemId] = useState<string|undefined>()
@@ -21,7 +22,7 @@ export default function Home({ mediaItems }: { mediaItems: GooglePhotosMediaItem
       <JourneyMap mediaItems={mediaItems} activeMediaItemId={activeMediaItemId} />
       <main className="xl:container mx-auto p-4 grid pointer-events-none relative z-10">
         <div className="w-full max-w-lg justify-self-end pointer-events-auto">
-          <Timeline mediaItems={mediaItems} activeMediaItemId={activeMediaItemId} setActiveMediaItemId={setActiveMediaItemId} />
+          <Timeline sortedMediaItems={mediaItems} activeMediaItemId={activeMediaItemId} setActiveMediaItemId={setActiveMediaItemId} />
         </div>
       </main>
     </>
@@ -47,7 +48,7 @@ export async function getStaticProps() {
 
     await cacheItems(validMediaItems)
 
-    mediaItems = validMediaItems
+    mediaItems = sortByTimeDescending(validMediaItems)
   }
 
   return {

@@ -1,14 +1,24 @@
-import { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 import { GooglePhotosMediaItem } from '../lib/google-photos-api'
-import { groupByDay, sortByTimeDescending } from '../utils/sort-media-items'
+import { parseToPx, resolveTailwindConfig } from '../utils/css'
+import { scrollIntoView } from '../utils/scroll-into-view'
+import { groupByDay } from '../utils/sort-media-items'
+import TimelineControls from './TimelineControls'
 import TimelineItemGroup from './TimelineItemGroup'
 
-export default function Timeline({ mediaItems, activeMediaItemId, setActiveMediaItemId }: { mediaItems: GooglePhotosMediaItem[], activeMediaItemId?: string, setActiveMediaItemId: Dispatch<SetStateAction<string|undefined>> }) {
-  const itemsByDay = groupByDay(mediaItems)
+const tailwindConfig = resolveTailwindConfig()
+
+export default function Timeline({ sortedMediaItems, activeMediaItemId, setActiveMediaItemId }: { sortedMediaItems: GooglePhotosMediaItem[], activeMediaItemId?: string, setActiveMediaItemId: Dispatch<SetStateAction<string|undefined>> }) {
+  const itemsByDay = groupByDay(sortedMediaItems)
   const sortedDays = Object.keys(itemsByDay).sort().reverse()
+
+  const activeItemRef = useRef<HTMLElement|null>(null)
+  const [needScrollToActiveItem, setNeedScrollToActiveItem] = useState<boolean>(() => false)
 
   const [itemVisibilityObserver, setItemVisibilityObserver] = useState<IntersectionObserver|undefined>()
   useEffect(() => {
+    if (needScrollToActiveItem) return
+
     let visibleItemIds: string[] = []
 
     const observer = new IntersectionObserver(
@@ -36,11 +46,15 @@ export default function Timeline({ mediaItems, activeMediaItemId, setActiveMedia
           ...newlyVisibleItemIds,
         ]
 
-        const topmostVisibleItem = sortByTimeDescending(mediaItems)
-          .find(item => visibleItemIds.includes(item.id))
+        // To reduce unnecessary focus flickers in edge cases,
+        // only change active item if previous one is no longer visible.
+        if (!activeMediaItemId || !visibleItemIds.includes(activeMediaItemId)) {
+          const topmostVisibleItem = sortedMediaItems
+            .find(item => visibleItemIds.includes(item.id))
 
-        if (topmostVisibleItem) {
-          setActiveMediaItemId(topmostVisibleItem.id)
+          if (topmostVisibleItem) {
+            setActiveMediaItemId(topmostVisibleItem.id)
+          }
         }
       },
       { threshold: 0.5 }
@@ -51,7 +65,41 @@ export default function Timeline({ mediaItems, activeMediaItemId, setActiveMedia
     return () => {
       observer.disconnect()
     }
-  }, [mediaItems, setActiveMediaItemId])
+  }, [sortedMediaItems, activeMediaItemId, setActiveMediaItemId, needScrollToActiveItem])
+
+  useEffect(() => {
+    if (needScrollToActiveItem && activeItemRef.current) {
+      scrollIntoView(activeItemRef.current, {
+        offsetTop: -1 * (parseToPx(tailwindConfig.theme?.margin?.['20'] || '') ?? 0),
+      })
+
+      // Wait a bit for scrolling to finish before releasing control. Duration
+      // is user agent specific, so 250ms is just a good enough estimate.
+      setTimeout(() => {
+        setNeedScrollToActiveItem(false)
+      }, 250)
+    } else {
+      setNeedScrollToActiveItem(false)
+    }
+  }, [needScrollToActiveItem])
+
+  const handlePrevClick = (): void => {
+    const maxIndex = sortedMediaItems.length - 1
+    const activeIndex = sortedMediaItems.findIndex(item => item.id === activeMediaItemId) ?? maxIndex
+    const prevIndex = Math.min(maxIndex, activeIndex + 1)
+
+    setActiveMediaItemId(sortedMediaItems[prevIndex]?.id)
+    setNeedScrollToActiveItem(true)
+  }
+
+  const handleNextClick = (): void => {
+    const minIndex = 0
+    const activeIndex = sortedMediaItems.findIndex(item => item.id === activeMediaItemId) ?? minIndex
+    const nextIndex = Math.max(minIndex, activeIndex - 1)
+
+    setActiveMediaItemId(sortedMediaItems[nextIndex]?.id)
+    setNeedScrollToActiveItem(true)
+  }
 
   return (
     <>
@@ -59,17 +107,28 @@ export default function Timeline({ mediaItems, activeMediaItemId, setActiveMedia
         <h1 className="text-3xl">Site title</h1>
         <p>Site introduction goes here.</p>
       </header>
-      {sortedDays.map(day => {
-        return (
-          <TimelineItemGroup
-            key={day}
-            date={day}
-            items={itemsByDay[day]}
-            activeItemId={activeMediaItemId}
-            itemVisibilityObserver={itemVisibilityObserver}
-          />
-        )
-      })}
+      <div>
+        {sortedDays.map(day => {
+          return (
+            <TimelineItemGroup
+              key={day}
+              date={day}
+              items={itemsByDay[day]}
+              activeItemId={activeMediaItemId}
+              activeItemRef={activeItemRef}
+              itemVisibilityObserver={itemVisibilityObserver}
+            />
+          )
+        })}
+      </div>
+      <div className="fixed bottom-4 right-4 xl:hidden">
+        <TimelineControls
+          isFirstItemActive={sortedMediaItems[0]?.id === activeMediaItemId}
+          isLastItemActive={sortedMediaItems[sortedMediaItems.length - 1]?.id === activeMediaItemId}
+          handlePrevClick={handlePrevClick}
+          handleNextClick={handleNextClick}
+        />
+      </div>
     </>
   )
 }

@@ -1,11 +1,12 @@
 import { GooglePhotosMediaItem } from '@/lib/google-photos-api'
 import { sortByTimeDescending } from '@/utils/sort-media-items'
-import { ChevronRightIcon } from '@heroicons/react/20/solid'
 import { formatInTimeZone } from 'date-fns-tz'
+import { MouseEventHandler, MutableRefObject, useRef } from 'react'
 import { getLocationLabel } from '../lib/media-item-enrichment'
+import { scrollIntoView } from '../utils/scroll-into-view'
 import TimelineItem from './TimelineItem'
 
-export default function TimelineItemGroup({ date, items, activeItemId, itemVisibilityObserver }: { date: string, items: GooglePhotosMediaItem[], activeItemId?: string, itemVisibilityObserver?: IntersectionObserver }) {
+export default function TimelineItemGroup({ date, items, activeItemId, activeItemRef, itemVisibilityObserver }: { date: string, items: GooglePhotosMediaItem[], activeItemId?: string, activeItemRef?: MutableRefObject<HTMLElement|null>, itemVisibilityObserver?: IntersectionObserver }) {
   const dateTitle = formatInTimeZone(date, 'UTC', 'E, MMM d')
   const sortedItems = sortByTimeDescending(items)
 
@@ -16,20 +17,31 @@ export default function TimelineItemGroup({ date, items, activeItemId, itemVisib
     ? (startLocationLabel !== endLocationLabel ? `${startLocationLabel} - ${endLocationLabel}` : startLocationLabel)
     : null
 
+  const groupContainer = useRef<HTMLDivElement>(null)
+  const handleHeaderClick: MouseEventHandler<HTMLElement> = (event) => {
+    if (groupContainer.current) {
+      scrollIntoView(groupContainer.current)
+    }
+  }
+
   return (
-    <div className="mt-8 mb-4">
-      <header className="inline-flex items-center sticky top-4 py-2 px-4 z-10 bg-monza-500 rounded-2xl">
+    <div className="mt-8 mb-4" ref={groupContainer}>
+      <header className="inline-flex items-center sticky top-4 py-2 px-4 z-10 bg-monza-500 rounded-2xl cursor-pointer" onClick={handleHeaderClick}>
         <div className="md:flex">
           <h2 className="text-white">{dateTitle}</h2>
           {locationLabel && <h3 className="text-monza-200 md:ml-4">{locationLabel}</h3>}
         </div>
-        <button className="bg-monza-700 hover:bg-monza-800 text-white leading-none p-2 ml-8 rounded-full transition rotate-90">
-          <ChevronRightIcon className="w-4 h-4" />
-          <span className="sr-only">Collapse day</span>
-        </button>
       </header>
       <div className="pl-4 pr-2">
-        {sortedItems.map(item => <TimelineItem key={item.id} item={item} isActive={activeItemId === item.id} visibilityObserver={itemVisibilityObserver} />)}
+        {sortedItems.map(item => (
+          <TimelineItem
+            key={item.id}
+            item={item}
+            isActive={activeItemId === item.id}
+            activeItemRef={activeItemRef}
+            visibilityObserver={itemVisibilityObserver}
+          />)
+        )}
       </div>
     </div>
   )

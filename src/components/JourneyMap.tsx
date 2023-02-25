@@ -3,10 +3,9 @@ import mapboxgl, { Map, Marker } from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { GooglePhotosMediaItem } from '../lib/google-photos-api'
 import { getCoordinates } from '../lib/media-item-enrichment'
+import { resolveTailwindConfig } from '../utils/css'
 
-import resolveTailwindConfig from 'tailwindcss/resolveConfig'
-import tailwindExtendConfig from '@@/tailwind.config.js'
-const tailwindConfig = resolveTailwindConfig(tailwindExtendConfig)
+const tailwindConfig = resolveTailwindConfig()
 
 export default function JourneyMap({ mediaItems, activeMediaItemId }: { mediaItems: GooglePhotosMediaItem[], activeMediaItemId?: string }) {
   const mapContainer = useRef(null)
@@ -136,7 +135,7 @@ export default function JourneyMap({ mediaItems, activeMediaItemId }: { mediaIte
   })
 
   return (
-    <div className="absolute z-0 w-screen h-screen">
+    <div className="fixed z-0 w-screen h-screen">
       <div ref={mapContainer} className="w-full h-full" />
     </div>
   )

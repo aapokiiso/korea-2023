@@ -2,9 +2,9 @@ import { GooglePhotosMediaItem } from '@/lib/google-photos-api'
 import Image from 'next/image'
 import { formatInDisplayTimeZone } from '@/utils/date'
 import { getDescription, getLocationLabel } from '../lib/media-item-enrichment'
-import { useEffect, useRef } from 'react'
+import { MutableRefObject, useEffect, useRef } from 'react'
 
-export default function TimelineItem({ item, isActive, visibilityObserver }: { item: GooglePhotosMediaItem, isActive: boolean, visibilityObserver?: IntersectionObserver }) {
+export default function TimelineItem({ item, isActive, activeItemRef, visibilityObserver }: { item: GooglePhotosMediaItem, isActive: boolean, activeItemRef?: MutableRefObject<HTMLElement|null>, visibilityObserver?: IntersectionObserver }) {
   const aspectRatio = Number(item.mediaMetadata.height) / Number(item.mediaMetadata.width)
   const width = 1080 // TODO: maintain photo role dimensions centrally
 
@@ -12,9 +12,9 @@ export default function TimelineItem({ item, isActive, visibilityObserver }: { i
 
   const description = getDescription(item)
 
-  const element = useRef(null)
+  const elementRef = useRef<HTMLElement|null>(null)
   useEffect(() => {
-    const currentElement = element.current
+    const currentElement = elementRef.current
 
     if (currentElement && visibilityObserver) {
       visibilityObserver.observe(currentElement)
@@ -27,8 +27,15 @@ export default function TimelineItem({ item, isActive, visibilityObserver }: { i
     }
   }, [visibilityObserver])
 
+  const setRefs = (element: HTMLElement): void => {
+    elementRef.current = element
+    if (activeItemRef && isActive) {
+      activeItemRef.current = element
+    }
+  }
+
   return (
-    <article ref={element} data-id={item.id} className={`my-4 p-2 pt-4 bg-neutral-200 rounded-2xl shadow-lg overflow-hidden transition-opacity ${isActive ? ' opacity-100' : 'opacity-60'}`}>
+    <article ref={setRefs} data-id={item.id} className={`timeline-item my-4 p-2 pt-4 bg-neutral-200 rounded-2xl shadow-lg overflow-hidden transition-opacity ${isActive ? ' opacity-100' : 'opacity-60'}`}>
       <Image
         src={`/media/timeline/${item.id}`}
         alt=""
