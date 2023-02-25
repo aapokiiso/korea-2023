@@ -1,13 +1,13 @@
 import { GooglePhotosMediaItem } from '@/lib/google-photos-api'
 import { sortByTimeDescending } from '@/utils/sort-media-items'
 import { formatInTimeZone } from 'date-fns-tz'
-import { MouseEventHandler, MutableRefObject, useRef } from 'react'
+import { Dispatch, MouseEventHandler, MutableRefObject, SetStateAction, useRef } from 'react'
 import { getLocationLabel } from '../lib/media-item-enrichment'
+import { getDateTitle } from '../utils/date'
 import { scrollIntoView } from '../utils/scroll-into-view'
 import TimelineItem from './TimelineItem'
 
-export default function TimelineItemGroup({ date, items, activeItemId, activeItemRef, itemVisibilityObserver }: { date: string, items: GooglePhotosMediaItem[], activeItemId?: string, activeItemRef?: MutableRefObject<HTMLElement|null>, itemVisibilityObserver?: IntersectionObserver }) {
-  const dateTitle = formatInTimeZone(date, 'UTC', 'E, MMM d')
+export default function TimelineItemGroup({ date, items, activeItemId, activeItemRef, setActiveItemId, itemVisibilityObserver }: { date: string, items: GooglePhotosMediaItem[], activeItemId?: string, activeItemRef?: MutableRefObject<HTMLElement|null>, setActiveItemId: (activeItemId: string|undefined) => void, itemVisibilityObserver?: IntersectionObserver }) {
   const sortedItems = sortByTimeDescending(items)
 
   const startLocationLabel = sortedItems.length ? getLocationLabel(sortedItems[0]) : null
@@ -28,7 +28,7 @@ export default function TimelineItemGroup({ date, items, activeItemId, activeIte
     <div className="mt-8 mb-4" ref={groupContainer}>
       <header className="inline-flex items-center sticky top-4 py-2 px-4 z-10 bg-monza-500 rounded-2xl cursor-pointer" onClick={handleHeaderClick}>
         <div className="md:flex">
-          <h2 className="text-white">{dateTitle}</h2>
+          <h2 className="text-white">{getDateTitle(date)}</h2>
           {locationLabel && <h3 className="text-monza-200 md:ml-4">{locationLabel}</h3>}
         </div>
       </header>
@@ -39,6 +39,7 @@ export default function TimelineItemGroup({ date, items, activeItemId, activeIte
             item={item}
             isActive={activeItemId === item.id}
             activeItemRef={activeItemRef}
+            setActiveItemId={setActiveItemId}
             visibilityObserver={itemVisibilityObserver}
           />)
         )}

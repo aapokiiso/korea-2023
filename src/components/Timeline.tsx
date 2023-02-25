@@ -15,6 +15,13 @@ export default function Timeline({ sortedMediaItems, activeMediaItemId, setActiv
   const activeItemRef = useRef<HTMLElement|null>(null)
   const [needScrollToActiveItem, setNeedScrollToActiveItem] = useState<boolean>(() => false)
 
+  const setActiveMediaItemIdWithScrollTo = (activeItemId: string|undefined) => {
+    setActiveMediaItemId(activeItemId)
+    if (activeItemId) {
+      setNeedScrollToActiveItem(true)
+    }
+  }
+
   const [itemVisibilityObserver, setItemVisibilityObserver] = useState<IntersectionObserver|undefined>()
   useEffect(() => {
     if (needScrollToActiveItem) return
@@ -88,8 +95,7 @@ export default function Timeline({ sortedMediaItems, activeMediaItemId, setActiv
     const activeIndex = sortedMediaItems.findIndex(item => item.id === activeMediaItemId) ?? maxIndex
     const prevIndex = Math.min(maxIndex, activeIndex + 1)
 
-    setActiveMediaItemId(sortedMediaItems[prevIndex]?.id)
-    setNeedScrollToActiveItem(true)
+    setActiveMediaItemIdWithScrollTo(sortedMediaItems[prevIndex]?.id)
   }
 
   const handleNextClick = (): void => {
@@ -97,8 +103,7 @@ export default function Timeline({ sortedMediaItems, activeMediaItemId, setActiv
     const activeIndex = sortedMediaItems.findIndex(item => item.id === activeMediaItemId) ?? minIndex
     const nextIndex = Math.max(minIndex, activeIndex - 1)
 
-    setActiveMediaItemId(sortedMediaItems[nextIndex]?.id)
-    setNeedScrollToActiveItem(true)
+    setActiveMediaItemIdWithScrollTo(sortedMediaItems[nextIndex]?.id)
   }
 
   return (
@@ -116,6 +121,7 @@ export default function Timeline({ sortedMediaItems, activeMediaItemId, setActiv
               items={itemsByDay[day]}
               activeItemId={activeMediaItemId}
               activeItemRef={activeItemRef}
+              setActiveItemId={setActiveMediaItemIdWithScrollTo}
               itemVisibilityObserver={itemVisibilityObserver}
             />
           )
