@@ -7,7 +7,7 @@ import { resolveTailwindConfig } from '../utils/css'
 
 const tailwindConfig = resolveTailwindConfig()
 
-export default function JourneyMap({ mediaItems, activeMediaItemId }: { mediaItems: GooglePhotosMediaItem[], activeMediaItemId?: string }) {
+export default function JourneyMap({ mediaItems, activeMediaItemId, setActiveMediaItemIdWithScrollTo }: { mediaItems: GooglePhotosMediaItem[], activeMediaItemId?: string, setActiveMediaItemIdWithScrollTo: (activeItemId: string|undefined) => void }) {
   const mapContainer = useRef(null)
   const map = useRef<Map|null>(null)
 
@@ -48,7 +48,7 @@ export default function JourneyMap({ mediaItems, activeMediaItemId }: { mediaIte
           element.style.transitionTimingFunction = tailwindConfig?.theme?.transitionTimingFunction?.easeInOut as string
 
           element.addEventListener('click', () => {
-            window.alert(mediaItem.id)
+            setActiveMediaItemIdWithScrollTo(mediaItem.id)
           })
 
           const coords = getCoordinates(mediaItem)
@@ -68,7 +68,7 @@ export default function JourneyMap({ mediaItems, activeMediaItemId }: { mediaIte
         })
         .filter(marker => marker) as Marker[]
     )
-  }, [mediaItems, markerHeight, markerWidth])
+  }, [mediaItems, markerHeight, markerWidth, setActiveMediaItemIdWithScrollTo])
 
   useEffect(() => {
     const currentMap = map.current

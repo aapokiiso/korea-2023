@@ -1,4 +1,5 @@
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
+import { Transition } from '@headlessui/react'
+import { Dispatch, Fragment, MutableRefObject, SetStateAction, useEffect, useRef, useState } from 'react'
 import { GooglePhotosMediaItem } from '../lib/google-photos-api'
 import { parseToPx, resolveTailwindConfig } from '../utils/css'
 import { scrollIntoView } from '../utils/scroll-into-view'
@@ -8,28 +9,18 @@ import TimelineItemGroup from './TimelineItemGroup'
 
 const tailwindConfig = resolveTailwindConfig()
 
-export default function Timeline({ sortedMediaItems, activeMediaItemId, setActiveMediaItemId }: { sortedMediaItems: GooglePhotosMediaItem[], activeMediaItemId?: string, setActiveMediaItemId: Dispatch<SetStateAction<string|undefined>> }) {
+export default function Timeline({ sortedMediaItems, isVisible, activeMediaItemId, setActiveMediaItemId, activeItemRef, isScrollingUserControlled, setActiveMediaItemIdWithScrollTo }: { sortedMediaItems: GooglePhotosMediaItem[], isVisible: boolean, activeMediaItemId?: string, setActiveMediaItemId: Dispatch<SetStateAction<string|undefined>>, activeItemRef?: MutableRefObject<HTMLElement|null>, isScrollingUserControlled: boolean, setActiveMediaItemIdWithScrollTo: (activeItemId: string|undefined) => void }) {
   const itemsByDay = groupByDay(sortedMediaItems)
   const sortedDays = Object.keys(itemsByDay).sort().reverse()
 
-  const activeItemRef = useRef<HTMLElement|null>(null)
-  const [needScrollToActiveItem, setNeedScrollToActiveItem] = useState<boolean>(() => false)
-
-  const setActiveMediaItemIdWithScrollTo = (activeItemId: string|undefined) => {
-    setActiveMediaItemId(activeItemId)
-    if (activeItemId) {
-      setNeedScrollToActiveItem(true)
-    }
-  }
-
   const [itemVisibilityObserver, setItemVisibilityObserver] = useState<IntersectionObserver|undefined>()
   useEffect(() => {
-    if (needScrollToActiveItem) return
-
     let visibleItemIds: string[] = []
 
     const observer = new IntersectionObserver(
       (entries) => {
+        if (!isScrollingUserControlled) return
+
         const updates = entries
           .map(({ target, isIntersecting }) => ({
             itemId: target.getAttribute('data-id') || '',
@@ -60,6 +51,7 @@ export default function Timeline({ sortedMediaItems, activeMediaItemId, setActiv
             .find(item => visibleItemIds.includes(item.id))
 
           if (topmostVisibleItem) {
+            console.log('observer set', topmostVisibleItem.id)
             setActiveMediaItemId(topmostVisibleItem.id)
           }
         }
@@ -72,23 +64,7 @@ export default function Timeline({ sortedMediaItems, activeMediaItemId, setActiv
     return () => {
       observer.disconnect()
     }
-  }, [sortedMediaItems, activeMediaItemId, setActiveMediaItemId, needScrollToActiveItem])
-
-  useEffect(() => {
-    if (needScrollToActiveItem && activeItemRef.current) {
-      scrollIntoView(activeItemRef.current, {
-        offsetTop: -1 * (parseToPx(tailwindConfig.theme?.margin?.['20'] || '') ?? 0),
-      })
-
-      // Wait a bit for scrolling to finish before releasing control. Duration
-      // is user agent specific, so 250ms is just a good enough estimate.
-      setTimeout(() => {
-        setNeedScrollToActiveItem(false)
-      }, 250)
-    } else {
-      setNeedScrollToActiveItem(false)
-    }
-  }, [needScrollToActiveItem])
+  }, [sortedMediaItems, activeMediaItemId, setActiveMediaItemId, isScrollingUserControlled])
 
   const handlePrevClick = (): void => {
     const maxIndex = sortedMediaItems.length - 1
@@ -107,27 +83,44 @@ export default function Timeline({ sortedMediaItems, activeMediaItemId, setActiv
   }
 
   return (
-    <>
-      <header className="p-4 rounded bg-white border border-gray-200 shadow-lg">
-        <h1 className="text-3xl">Site title</h1>
-        <p>Site introduction goes here.</p>
-      </header>
-      <div>
-        {sortedDays.map(day => {
-          return (
-            <TimelineItemGroup
-              key={day}
-              date={day}
-              items={itemsByDay[day]}
-              activeItemId={activeMediaItemId}
-              activeItemRef={activeItemRef}
-              setActiveItemId={setActiveMediaItemIdWithScrollTo}
-              itemVisibilityObserver={itemVisibilityObserver}
-            />
-          )
-        })}
-      </div>
-      <div className="fixed bottom-4 right-4 xl:hidden">
+    <Transition
+      show={isVisible}
+    >
+      <div className={`lg:hidden fixed inset-0 transition backdrop-blur ${isVisible ? 'backdrop-opacity-1' : 'backdrop-opacity-0'}`}></div>
+
+      <Transition.Child
+        enter="ease-out duration-150"
+        enterFrom="opacity-0 scale-95"
+        enterTo="opacity-100 scale-100"
+        leave="ease-in duration-150"
+        leaveFrom="opacity-100 scale-100"
+        leaveTo="opacity-0 scale-95"
+        className="relative z-10"
+      >
+        <div className="pb-20">
+          <header className="p-4 rounded bg-white border border-gray-200 shadow-lg">
+            <h1 className="text-3xl">Site title</h1>
+            <p>Site introduction goes here.</p>
+          </header>
+          <div>
+            {sortedDays.map(day => {
+              return (
+                <TimelineItemGroup
+                  key={day}
+                  date={day}
+                  items={itemsByDay[day]}
+                  activeItemId={activeMediaItemId}
+                  activeItemRef={activeItemRef}
+                  setActiveItemId={setActiveMediaItemIdWithScrollTo}
+                  itemVisibilityObserver={itemVisibilityObserver}
+                />
+              )
+            })}
+          </div>
+        </div>
+      </Transition.Child>
+
+      <div className={`fixed z-10 bottom-4 right-4 xl:hidden ${!isVisible ? 'hidden' : ''}`}>
         <TimelineControls
           isFirstItemActive={sortedMediaItems[0]?.id === activeMediaItemId}
           isLastItemActive={sortedMediaItems[sortedMediaItems.length - 1]?.id === activeMediaItemId}
@@ -135,6 +128,6 @@ export default function Timeline({ sortedMediaItems, activeMediaItemId, setActiv
           handleNextClick={handleNextClick}
         />
       </div>
-    </>
+    </Transition>
   )
 }

@@ -3,14 +3,10 @@ import { Dialog, Transition  } from '@headlessui/react'
 import { GooglePhotosMediaItem } from '../lib/google-photos-api'
 import Image from 'next/image'
 import { getAspectRatio } from '../utils/media'
-import { getDescription, getLocationLabel } from '../lib/media-item-enrichment'
-import { formatInDisplayTimeZone } from '../utils/date'
-import { CheckCircleIcon, XMarkIcon } from '@heroicons/react/20/solid'
+import { XMarkIcon } from '@heroicons/react/20/solid'
 
 export default function FullscreenItem({ item, isOpen, setIsOpen }: { item: GooglePhotosMediaItem, isOpen: boolean, setIsOpen: Dispatch<SetStateAction<boolean>> }) {
   const width = 2560 // TODO: maintain photo role dimensions centrally
-
-  const description = getDescription(item)
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -28,7 +24,7 @@ export default function FullscreenItem({ item, isOpen, setIsOpen }: { item: Goog
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
+          <div className="flex min-h-full items-center justify-center p-20 text-center">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
