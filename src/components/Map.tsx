@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import mapboxgl, { Map as MapboxMap, Marker } from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { GooglePhotosMediaItem } from '../lib/google-photos-api'
 import { getCoordinates } from '../lib/media-item-enrichment'
 import { resolveTailwindConfig } from '../utils/css'
+import { CachedGooglePhotosMediaItem } from '../lib/media-cache'
 
 const tailwindConfig = resolveTailwindConfig()
 
-export default function Map({ mediaItems, activeMediaItemId, setActiveMediaItemIdWithScrollTo }: { mediaItems: GooglePhotosMediaItem[], activeMediaItemId?: string, setActiveMediaItemIdWithScrollTo: (activeItemId: string|undefined) => void }) {
+export default function Map({ mediaItems, activeMediaItemId, setActiveMediaItemIdWithScrollTo }: { mediaItems: CachedGooglePhotosMediaItem[], activeMediaItemId?: string, setActiveMediaItemIdWithScrollTo: (activeItemId: string|undefined) => void }) {
   const mapContainer = useRef(null)
   const map = useRef<MapboxMap|null>(null)
 
@@ -29,8 +29,11 @@ export default function Map({ mediaItems, activeMediaItemId, setActiveMediaItemI
           element.style.width = tailwindConfig?.theme?.width?.['16'] as string
           element.style.height = tailwindConfig?.theme?.height?.['16'] as string
 
-          element.style.backgroundImage = `url(/media/thumbnail/${mediaItem.id})`
-          element.style.backgroundSize = '100%'
+          const thumbnailUrl = mediaItem.thumbnailUrl
+          if (thumbnailUrl) {
+            element.style.backgroundImage = `url(${thumbnailUrl})`
+            element.style.backgroundSize = '100%'
+          }
 
           element.style.borderRadius = '50%'
           element.style.borderWidth = tailwindConfig?.theme?.borderWidth?.['4'] as string

@@ -1,13 +1,10 @@
 import { Dispatch, SetStateAction, Fragment } from 'react'
 import { Dialog, Transition  } from '@headlessui/react'
-import { GooglePhotosMediaItem } from '../lib/google-photos-api'
 import Image from 'next/image'
-import { getAspectRatio } from '../utils/media'
 import { XMarkIcon } from '@heroicons/react/20/solid'
+import { CachedGooglePhotosMediaItem } from '../lib/media-cache'
 
-export default function FullscreenItem({ item, isOpen, setIsOpen }: { item: GooglePhotosMediaItem, isOpen: boolean, setIsOpen: Dispatch<SetStateAction<boolean>> }) {
-  const width = 2560 // TODO: maintain photo role dimensions centrally
-
+export default function FullscreenItem({ item, isOpen, setIsOpen }: { item: CachedGooglePhotosMediaItem, isOpen: boolean, setIsOpen: Dispatch<SetStateAction<boolean>> }) {
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={() => setIsOpen(false)}>
@@ -35,13 +32,13 @@ export default function FullscreenItem({ item, isOpen, setIsOpen }: { item: Goog
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="relative w-full max-w-screen-lg transform overflow-hidden rounded-2xl bg-white p-4 text-left align-middle shadow-xl transition group">
-                <Image
-                  src={`/media/fullscreen/${item.id}`}
+                {item.fullscreenUrl && <Image
+                  src={item.fullscreenUrl}
                   alt=""
-                  width={width}
-                  height={Math.round(width * getAspectRatio(item))}
+                  width={item.fullscreenMediaMetadata?.width}
+                  height={item.fullscreenMediaMetadata?.height}
                   className="rounded-2xl"
-                />
+                />}
                 <div className="absolute top-8 right-8">
                   <button
                     type="button"

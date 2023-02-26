@@ -6,7 +6,7 @@ export interface Coordinates {
 }
 
 const getMetadataStartIndexInDescription = (mediaItem: GooglePhotosMediaItem): number =>
-  mediaItem.description.lastIndexOf('--')
+  mediaItem.description?.lastIndexOf('--') ?? -1
 
 export const getGeographyMetadata = (mediaItem: GooglePhotosMediaItem): Record<string, string> => {
   const startIndex = getMetadataStartIndexInDescription(mediaItem)

@@ -1,13 +1,12 @@
-import { GooglePhotosMediaItem } from '@/lib/google-photos-api'
 import { sortByTimeDescending } from '@/utils/sort-media-items'
-import { formatInTimeZone } from 'date-fns-tz'
-import { Dispatch, MouseEventHandler, MutableRefObject, SetStateAction, useRef } from 'react'
+import { MouseEventHandler, MutableRefObject, useRef } from 'react'
+import { CachedGooglePhotosMediaItem } from '../lib/media-cache'
 import { getLocationLabel } from '../lib/media-item-enrichment'
 import { getDateTitle } from '../utils/date'
 import { scrollIntoView } from '../utils/scroll-into-view'
 import TimelineItem from './TimelineItem'
 
-export default function TimelineItemGroup({ date, items, activeItemId, activeItemRef, setActiveItemId, itemVisibilityObserver }: { date: string, items: GooglePhotosMediaItem[], activeItemId?: string, activeItemRef?: MutableRefObject<HTMLElement|null>, setActiveItemId: (activeItemId: string|undefined) => void, itemVisibilityObserver?: IntersectionObserver }) {
+export default function TimelineItemGroup({ date, items, activeItemId, activeItemRef, setActiveItemId, itemVisibilityObserver }: { date: string, items: CachedGooglePhotosMediaItem[], activeItemId?: string, activeItemRef?: MutableRefObject<HTMLElement|null>, setActiveItemId: (activeItemId: string|undefined) => void, itemVisibilityObserver?: IntersectionObserver }) {
   const sortedItems = sortByTimeDescending(items)
 
   const startLocationLabel = sortedItems.length ? getLocationLabel(sortedItems[0]) : null

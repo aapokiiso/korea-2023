@@ -2,7 +2,7 @@ import Head from 'next/head'
 import { GooglePhotosMediaItem, listAlbumMedia } from '@/lib/google-photos-api'
 
 import { getCoordinates, getLocationLabel } from '../lib/media-item-enrichment'
-import { cacheItems } from '../lib/media-cache'
+import { CachedGooglePhotosMediaItem, cacheItems } from '../lib/media-cache'
 import Map from '../components/Map'
 import { useEffect, useRef, useState } from 'react'
 import Timeline from '../components/Timeline'
@@ -13,7 +13,7 @@ import { parseToPx, resolveTailwindConfig } from '../utils/css'
 
 const tailwindConfig = resolveTailwindConfig()
 
-export default function Home({ sortedMediaItems }: { sortedMediaItems: GooglePhotosMediaItem[] }) {
+export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGooglePhotosMediaItem[] }) {
   const [activeMediaItemId, setActiveMediaItemId] = useState<string|undefined>()
 
   const [isTimelineVisible, setIsTimelineVisible] = useState<boolean>(true)
@@ -119,7 +119,7 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: GooglePho
 export async function getStaticProps() {
   const albumId = process.env.GOOGLE_PHOTOS_ALBUM_ID
 
-  let sortedMediaItems: GooglePhotosMediaItem[] = []
+  let sortedMediaItems: CachedGooglePhotosMediaItem[] = []
   if (albumId) {
     let allMediaItems: GooglePhotosMediaItem[] = []
     let pageToken: string|undefined
@@ -131,11 +131,16 @@ export async function getStaticProps() {
     } while (pageToken)
 
     const validMediaItems = allMediaItems
+      // TODO: remove debug
+      // .map(mediaItem => ({
+      //   ...mediaItem,
+      //   description: `--\nLocation: Foobar\nCoordinates: (${Math.random() * 180 - 90},${Math.random() * 360 - 180})\n`,
+      // }))
       .filter(mediaItem => getLocationLabel(mediaItem) && getCoordinates(mediaItem))
 
-    await cacheItems(validMediaItems)
+    const cachedMediaItems = await cacheItems(validMediaItems)
 
-    sortedMediaItems = sortByTimeDescending(validMediaItems)
+    sortedMediaItems = sortByTimeDescending(cachedMediaItems)
   }
 
   return {

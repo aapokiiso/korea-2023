@@ -1,22 +1,17 @@
 import { Transition } from '@headlessui/react'
-import { Dispatch, Fragment, MutableRefObject, SetStateAction, useEffect, useRef, useState } from 'react'
-import { GooglePhotosMediaItem } from '../lib/google-photos-api'
-import { parseToPx, resolveTailwindConfig } from '../utils/css'
-import { scrollIntoView } from '../utils/scroll-into-view'
+import { Dispatch, MutableRefObject, SetStateAction, useEffect, useRef, useState } from 'react'
+import { CachedGooglePhotosMediaItem } from '../lib/media-cache'
 import { groupByDay } from '../utils/sort-media-items'
 import TimelineControls from './TimelineControls'
 import TimelineItemGroup from './TimelineItemGroup'
 
-const tailwindConfig = resolveTailwindConfig()
-
-export default function Timeline({ sortedMediaItems, isVisible, activeMediaItemId, setActiveMediaItemId, activeItemRef, isScrollingUserControlled, setActiveMediaItemIdWithScrollTo }: { sortedMediaItems: GooglePhotosMediaItem[], isVisible: boolean, activeMediaItemId?: string, setActiveMediaItemId: Dispatch<SetStateAction<string|undefined>>, activeItemRef?: MutableRefObject<HTMLElement|null>, isScrollingUserControlled: boolean, setActiveMediaItemIdWithScrollTo: (activeItemId: string|undefined) => void }) {
+export default function Timeline({ sortedMediaItems, isVisible, activeMediaItemId, setActiveMediaItemId, activeItemRef, isScrollingUserControlled, setActiveMediaItemIdWithScrollTo }: { sortedMediaItems: CachedGooglePhotosMediaItem[], isVisible: boolean, activeMediaItemId?: string, setActiveMediaItemId: Dispatch<SetStateAction<string|undefined>>, activeItemRef?: MutableRefObject<HTMLElement|null>, isScrollingUserControlled: boolean, setActiveMediaItemIdWithScrollTo: (activeItemId: string|undefined) => void }) {
   const itemsByDay = groupByDay(sortedMediaItems)
   const sortedDays = Object.keys(itemsByDay).sort().reverse()
 
+  const visibleItemIds = useRef<string[]>([])
   const [itemVisibilityObserver, setItemVisibilityObserver] = useState<IntersectionObserver|undefined>()
   useEffect(() => {
-    let visibleItemIds: string[] = []
-
     const observer = new IntersectionObserver(
       (entries) => {
         if (!isScrollingUserControlled) return
@@ -28,7 +23,7 @@ export default function Timeline({ sortedMediaItems, isVisible, activeMediaItemI
           }))
           .filter(({ itemId }) => itemId)
 
-        const stillVisibleItemIds = visibleItemIds
+        const stillVisibleItemIds = visibleItemIds.current
           .filter(visibleItemId => {
             const update = updates.find(({ itemId }) => itemId === visibleItemId)
 
@@ -38,17 +33,20 @@ export default function Timeline({ sortedMediaItems, isVisible, activeMediaItemI
         const newlyVisibleItemIds = updates
           .filter(({ isIntersecting }) => isIntersecting)
           .map(({ itemId }) => itemId)
+          .filter(itemId => !stillVisibleItemIds.includes(itemId))
 
-        visibleItemIds = [
+        visibleItemIds.current = [
           ...stillVisibleItemIds,
           ...newlyVisibleItemIds,
         ]
 
-        // To reduce unnecessary focus flickers in edge cases,
-        // only change active item if previous one is no longer visible.
-        if (!activeMediaItemId || !visibleItemIds.includes(activeMediaItemId)) {
+        // To reduce unnecessary focus flickers and jumps in edge cases,
+        // only change active item when previous one is no longer visible or
+        // new items become visible.
+        const shouldKeepActive = activeMediaItemId && visibleItemIds.current.includes(activeMediaItemId) && newlyVisibleItemIds.length === 0
+        if (!shouldKeepActive) {
           const topmostVisibleItem = sortedMediaItems
-            .find(item => visibleItemIds.includes(item.id))
+            .find(item => visibleItemIds.current.includes(item.id))
 
           if (topmostVisibleItem) {
             setActiveMediaItemId(topmostVisibleItem.id)
@@ -119,7 +117,7 @@ export default function Timeline({ sortedMediaItems, isVisible, activeMediaItemI
         </div>
       </Transition.Child>
 
-      <div className={`fixed z-10 bottom-4 right-4 xl:hidden ${!isVisible ? 'hidden' : ''}`}>
+      <div className="fixed z-10 bottom-4 right-4 xl:hidden">
         <TimelineControls
           isFirstItemActive={sortedMediaItems[0]?.id === activeMediaItemId}
           isLastItemActive={sortedMediaItems[sortedMediaItems.length - 1]?.id === activeMediaItemId}

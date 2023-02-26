@@ -1,17 +1,14 @@
-import { GooglePhotosMediaItem } from '@/lib/google-photos-api'
 import Image from 'next/image'
 import { formatInDisplayTimeZone } from '@/utils/date'
 import { getDescription, getLocationLabel } from '../lib/media-item-enrichment'
-import { Dispatch, MouseEventHandler, MutableRefObject, SetStateAction, useEffect, useRef, useState } from 'react'
+import { MouseEventHandler, MutableRefObject, useEffect, useRef, useState } from 'react'
 import FullscreenItem from './FullscreenItem'
-import { getAspectRatio } from '../utils/media'
 import { resolveTailwindConfig } from '../utils/css'
+import { CachedGooglePhotosMediaItem } from '../lib/media-cache'
 
 const tailwindConfig = resolveTailwindConfig()
 
-export default function TimelineItem({ item, isActive, activeItemRef, setActiveItemId, visibilityObserver }: { item: GooglePhotosMediaItem, isActive: boolean, activeItemRef?: MutableRefObject<HTMLElement|null>, setActiveItemId: (activeItemId: string|undefined) => void, visibilityObserver?: IntersectionObserver }) {
-  const width = 1080 // TODO: maintain photo role dimensions centrally
-
+export default function TimelineItem({ item, isActive, activeItemRef, setActiveItemId, visibilityObserver }: { item: CachedGooglePhotosMediaItem, isActive: boolean, activeItemRef?: MutableRefObject<HTMLElement|null>, setActiveItemId: (activeItemId: string|undefined) => void, visibilityObserver?: IntersectionObserver }) {
   const description = getDescription(item)
 
   const elementRef = useRef<HTMLElement|null>(null)
@@ -63,14 +60,14 @@ export default function TimelineItem({ item, isActive, activeItemRef, setActiveI
         className={`my-4 p-2 pt-4 bg-neutral-200 rounded-2xl shadow-lg overflow-hidden cursor-pointer transition-opacity ${isActive ? ' opacity-100' : 'opacity-60'}`}
         onClick={handleItemClick}
       >
-        <Image
-          src={`/media/timeline/${item.id}`}
+        {item.timelineUrl && <Image
+          src={item.timelineUrl}
           alt=""
-          width={width}
-          height={Math.round(width * getAspectRatio(item))}
-          className="rounded-2xl"
+          width={item.timelineMediaMetadata?.width}
+          height={item.timelineMediaMetadata?.height}
+          className="rounded-2xl w-full"
           onClick={handleImageClick}
-        />
+        />}
         <div className="p-4">
           {description && <p className="whitespace-pre-wrap">{description}</p>}
           <p className="my-2">&mdash;</p>
