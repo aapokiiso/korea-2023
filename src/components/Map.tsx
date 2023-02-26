@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import mapboxgl, { Map, Marker } from 'mapbox-gl'
+import mapboxgl, { Map as MapboxMap, Marker } from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { GooglePhotosMediaItem } from '../lib/google-photos-api'
 import { getCoordinates } from '../lib/media-item-enrichment'
@@ -7,15 +7,9 @@ import { resolveTailwindConfig } from '../utils/css'
 
 const tailwindConfig = resolveTailwindConfig()
 
-export default function JourneyMap({ mediaItems, activeMediaItemId, setActiveMediaItemIdWithScrollTo }: { mediaItems: GooglePhotosMediaItem[], activeMediaItemId?: string, setActiveMediaItemIdWithScrollTo: (activeItemId: string|undefined) => void }) {
+export default function Map({ mediaItems, activeMediaItemId, setActiveMediaItemIdWithScrollTo }: { mediaItems: GooglePhotosMediaItem[], activeMediaItemId?: string, setActiveMediaItemIdWithScrollTo: (activeItemId: string|undefined) => void }) {
   const mapContainer = useRef(null)
-  const map = useRef<Map|null>(null)
-
-  const markerWidth = tailwindConfig?.theme?.width?.['16'] as string
-  const markerHeight = tailwindConfig?.theme?.height?.['16'] as string
-
-  const activeMarkerWidth = tailwindConfig?.theme?.width?.['20'] as string
-  const activeMarkerHeight = tailwindConfig?.theme?.height?.['20'] as string
+  const map = useRef<MapboxMap|null>(null)
 
   const [markers, setMarkers] = useState<Marker[]>(() => [])
 
@@ -32,20 +26,16 @@ export default function JourneyMap({ mediaItems, activeMediaItemId, setActiveMed
           element.className = 'marker'
           element.setAttribute('data-media-item-id', mediaItem.id)
 
-          element.style.width = markerWidth
-          element.style.height = markerHeight
+          element.style.width = tailwindConfig?.theme?.width?.['16'] as string
+          element.style.height = tailwindConfig?.theme?.height?.['16'] as string
 
           element.style.backgroundImage = `url(/media/thumbnail/${mediaItem.id})`
           element.style.backgroundSize = '100%'
 
           element.style.borderRadius = '50%'
           element.style.borderWidth = tailwindConfig?.theme?.borderWidth?.['4'] as string
-          const neutralColor = tailwindConfig?.theme?.borderColor?.neutral as { [key: string]: string }
-          element.style.borderColor = neutralColor['200']
-
-          element.style.transitionProperty = tailwindConfig?.theme?.transitionProperty?.mapMarkerSize as string
-          element.style.transitionDuration = tailwindConfig?.theme?.transitionDuration?.['150'] as string
-          element.style.transitionTimingFunction = tailwindConfig?.theme?.transitionTimingFunction?.easeInOut as string
+          const borderColor = tailwindConfig?.theme?.borderColor as { [key: string]: string }
+          element.style.borderColor = borderColor?.neutral['200'] as string
 
           element.addEventListener('click', () => {
             setActiveMediaItemIdWithScrollTo(mediaItem.id)
@@ -68,7 +58,7 @@ export default function JourneyMap({ mediaItems, activeMediaItemId, setActiveMed
         })
         .filter(marker => marker) as Marker[]
     )
-  }, [mediaItems, markerHeight, markerWidth, setActiveMediaItemIdWithScrollTo])
+  }, [mediaItems, setActiveMediaItemIdWithScrollTo])
 
   useEffect(() => {
     const currentMap = map.current
@@ -89,17 +79,15 @@ export default function JourneyMap({ mediaItems, activeMediaItemId, setActiveMed
       .filter(marker => marker !== activeMarker)
       .map(marker => marker.getElement())
       .forEach(markerElement => {
-        markerElement.style.width = markerWidth
-        markerElement.style.height = markerHeight
+        markerElement.classList.remove('mapboxgl-marker-active')
       })
 
     if (activeMarker) {
       const activeMarkerElement = activeMarker.getElement()
 
-      activeMarkerElement.style.width = activeMarkerWidth
-      activeMarkerElement.style.height = activeMarkerHeight
+      activeMarkerElement.classList.add('mapboxgl-marker-active')
     }
-  }, [markers, activeMarker, markerWidth, markerHeight, activeMarkerWidth, activeMarkerHeight])
+  }, [markers, activeMarker])
 
   useEffect(() => {
     const currentMap = map.current
@@ -118,7 +106,7 @@ export default function JourneyMap({ mediaItems, activeMediaItemId, setActiveMed
 
     const coords = mediaItems[0] ? getCoordinates(mediaItems[0]) : null
 
-    map.current = new mapboxgl.Map({
+    const mapboxMap = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/dark-v11',
       center: coords
@@ -131,7 +119,13 @@ export default function JourneyMap({ mediaItems, activeMediaItemId, setActiveMed
           lng: 126.438507,
         },
       zoom: 10,
+      attributionControl: false,
+      logoPosition: 'top-left',
     })
+
+    mapboxMap.addControl(new mapboxgl.AttributionControl(), 'top-right')
+
+    map.current = mapboxMap
   })
 
   return (

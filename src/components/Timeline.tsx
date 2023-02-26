@@ -51,7 +51,6 @@ export default function Timeline({ sortedMediaItems, isVisible, activeMediaItemI
             .find(item => visibleItemIds.includes(item.id))
 
           if (topmostVisibleItem) {
-            console.log('observer set', topmostVisibleItem.id)
             setActiveMediaItemId(topmostVisibleItem.id)
           }
         }

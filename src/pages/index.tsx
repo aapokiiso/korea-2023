@@ -3,11 +3,11 @@ import { GooglePhotosMediaItem, listAlbumMedia } from '@/lib/google-photos-api'
 
 import { getCoordinates, getLocationLabel } from '../lib/media-item-enrichment'
 import { cacheItems } from '../lib/media-cache'
-import JourneyMap from '../components/JourneyMap'
+import Map from '../components/Map'
 import { useEffect, useRef, useState } from 'react'
 import Timeline from '../components/Timeline'
 import { sortByTimeDescending } from '../utils/sort-media-items'
-import GlobalControls from '../components/GlobalControls'
+import MapControls from '../components/MapControls'
 import { scrollIntoView } from '../utils/scroll-into-view'
 import { parseToPx, resolveTailwindConfig } from '../utils/css'
 
@@ -88,7 +88,7 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: GooglePho
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <JourneyMap
+      <Map
         mediaItems={sortedMediaItems}
         activeMediaItemId={activeMediaItemId}
         setActiveMediaItemIdWithScrollTo={setActiveMediaItemIdWithScrollTo}
@@ -107,7 +107,7 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: GooglePho
         </div>
       </main>
       <div className="fixed bottom-4 left-4 lg:hidden z-10">
-        <GlobalControls
+        <MapControls
           isTimelineVisible={isTimelineVisible}
           handleToggleMapClick={handleToggleMapClick}
         />

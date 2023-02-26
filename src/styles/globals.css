@@ -21,6 +21,15 @@ a {
   text-decoration: none;
 }
 
+.mapboxgl-marker {
+  /* !important overrides inline opacity set by Mapbox. */
+  opacity: 0.6 !important;
+}
+
+.mapboxgl-marker-active {
+  opacity: 1 !important;
+}
+
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;

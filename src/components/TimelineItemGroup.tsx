@@ -26,10 +26,10 @@ export default function TimelineItemGroup({ date, items, activeItemId, activeIte
 
   return (
     <div className="mt-8 mb-4" ref={groupContainer}>
-      <header className="inline-flex items-center sticky top-4 py-2 px-4 z-10 bg-monza-500 rounded-2xl cursor-pointer" onClick={handleHeaderClick}>
+      <header className="inline-flex items-center sticky top-4 py-2 px-4 z-10 bg-accent-primary-500 rounded-2xl cursor-pointer" onClick={handleHeaderClick}>
         <div className="md:flex">
           <h2 className="text-white">{getDateTitle(date)}</h2>
-          {locationLabel && <h3 className="text-monza-200 md:ml-4">{locationLabel}</h3>}
+          {locationLabel && <h3 className="text-accent-primary-200 md:ml-4">{locationLabel}</h3>}
         </div>
       </header>
       <div className="pl-4 pr-2">
