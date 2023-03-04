@@ -13,6 +13,7 @@ const nextConfig = {
   serverRuntimeConfig: {
     publicDir: `${__dirname}/public`,
   },
+  staticPageGenerationTimeout: 1800, // 30min
 }
 
 module.exports = withBundleAnalyzer(nextConfig)
