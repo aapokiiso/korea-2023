@@ -1,7 +1,7 @@
-- Video caching
-- Dark mode
-- PWA/Manifest
-- Accessibility
 - Bundle size
 - CDN image optimization
+- CI
 - Google Photos OAuth cloud functions
+- Accessibility
+- PWA/Manifest
+- Dark mode

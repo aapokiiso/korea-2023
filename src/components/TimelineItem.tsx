@@ -4,7 +4,8 @@ import { getDescription, getLocationLabel } from '../lib/media-item-enrichment'
 import { MouseEventHandler, MutableRefObject, useEffect, useRef, useState } from 'react'
 import FullscreenItem from './FullscreenItem'
 import { resolveTailwindConfig } from '../utils/css'
-import { CachedGooglePhotosMediaItem } from '../lib/media-cache'
+import { CachedGooglePhotosMediaItem, GooglePhotosPhotoCache, GooglePhotosVideoCache } from '../lib/media-cache'
+import { isPhoto, isVideo } from '../lib/google-photos-media-type'
 
 const tailwindConfig = resolveTailwindConfig()
 
@@ -52,7 +53,38 @@ export default function TimelineItem({ item, isActive, activeItemRef, setActiveI
     }
   }
 
-  return (
+  let mediaElement: JSX.Element|null = null
+  if (isPhoto(item)) {
+    const cache = item.cache as GooglePhotosPhotoCache
+
+    mediaElement = (
+      <Image
+        src={cache.timeline.url}
+        alt=""
+        width={cache.timeline.metadata.width}
+        height={cache.timeline.metadata.height}
+        className="rounded-2xl w-full"
+        onClick={handleImageClick}
+      />
+    )
+  } else if (isVideo(item)) {
+    const cache = item.cache as GooglePhotosVideoCache
+
+    mediaElement = (
+      <video
+        poster={cache.posterPhoto.timeline.url}
+        width={cache.posterPhoto.timeline.metadata.width}
+        height={cache.posterPhoto.timeline.metadata.height}
+        controls
+      >
+        <source src={cache.video.url} />
+
+        Unsupported video format
+      </video>
+    )
+  }
+
+  return mediaElement && (
     <>
       <article
         ref={setRefs}
@@ -60,14 +92,7 @@ export default function TimelineItem({ item, isActive, activeItemRef, setActiveI
         className={`my-4 p-2 pt-4 bg-neutral-200 rounded-2xl shadow-lg overflow-hidden cursor-pointer transition-opacity ${isActive ? ' opacity-100' : 'opacity-60'}`}
         onClick={handleItemClick}
       >
-        {item.timelineUrl && <Image
-          src={item.timelineUrl}
-          alt=""
-          width={item.timelineMediaMetadata?.width}
-          height={item.timelineMediaMetadata?.height}
-          className="rounded-2xl w-full"
-          onClick={handleImageClick}
-        />}
+        {mediaElement}
         <div className="p-4">
           {description && <p className="whitespace-pre-wrap">{description}</p>}
           <p className="my-2">&mdash;</p>
@@ -77,7 +102,7 @@ export default function TimelineItem({ item, isActive, activeItemRef, setActiveI
           </div>
         </div>
       </article>
-      <FullscreenItem item={item} isOpen={isFullscreenOpen} setIsOpen={setIsFullscreenOpen} />
+      {isPhoto(item) && <FullscreenItem item={item} isOpen={isFullscreenOpen} setIsOpen={setIsFullscreenOpen} />}
     </>
   )
 }

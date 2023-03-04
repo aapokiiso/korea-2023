@@ -77,11 +77,3 @@ export const listAlbumMedia = async (albumId: string, options?: GooglePhotosList
 
   return response.json()
 }
-
-export const isPhoto = (mediaItem: GooglePhotosMediaItem): boolean => {
-  return mediaItem.mediaMetadata.hasOwnProperty('photo')
-}
-
-export const isVideo = (mediaItem: GooglePhotosMediaItem): boolean => {
-  return mediaItem.mediaMetadata.hasOwnProperty('video')
-}

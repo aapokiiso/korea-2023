@@ -2,10 +2,26 @@ import { Dispatch, SetStateAction, Fragment } from 'react'
 import { Dialog, Transition  } from '@headlessui/react'
 import Image from 'next/image'
 import { XMarkIcon } from '@heroicons/react/20/solid'
-import { CachedGooglePhotosMediaItem } from '../lib/media-cache'
+import { CachedGooglePhotosMediaItem, GooglePhotosPhotoCache } from '../lib/media-cache'
+import { isPhoto } from '../lib/google-photos-media-type'
 
 export default function FullscreenItem({ item, isOpen, setIsOpen }: { item: CachedGooglePhotosMediaItem, isOpen: boolean, setIsOpen: Dispatch<SetStateAction<boolean>> }) {
-  return (
+  let mediaElement: JSX.Element|null = null
+  if (isPhoto(item)) {
+    const cache = item.cache as GooglePhotosPhotoCache
+
+    mediaElement = (
+      <Image
+        src={cache.fullscreen.url}
+        alt=""
+        width={cache.fullscreen.metadata.width}
+        height={cache.fullscreen.metadata.height}
+        className="rounded-2xl"
+      />
+    )
+  }
+
+  return mediaElement && (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={() => setIsOpen(false)}>
         <Transition.Child
@@ -31,14 +47,8 @@ export default function FullscreenItem({ item, isOpen, setIsOpen }: { item: Cach
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="relative w-full max-w-screen-lg transform overflow-hidden rounded-2xl bg-white p-4 text-left align-middle shadow-xl transition group">
-                {item.fullscreenUrl && <Image
-                  src={item.fullscreenUrl}
-                  alt=""
-                  width={item.fullscreenMediaMetadata?.width}
-                  height={item.fullscreenMediaMetadata?.height}
-                  className="rounded-2xl"
-                />}
+              <Dialog.Panel className="relative w-full max-w-screen-2xl transform overflow-hidden rounded-2xl bg-white p-4 text-left align-middle shadow-xl transition group">
+                {mediaElement}
                 <div className="absolute top-8 right-8">
                   <button
                     type="button"

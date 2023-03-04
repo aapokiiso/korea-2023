@@ -3,9 +3,28 @@ import mapboxgl, { Map as MapboxMap, Marker } from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { getCoordinates } from '../lib/media-item-enrichment'
 import { resolveTailwindConfig } from '../utils/css'
-import { CachedGooglePhotosMediaItem } from '../lib/media-cache'
+import { CachedGooglePhotosMediaItem, GooglePhotosPhotoCache, GooglePhotosVideoCache } from '../lib/media-cache'
+import { isPhoto, isVideo } from '../lib/google-photos-media-type'
 
 const tailwindConfig = resolveTailwindConfig()
+
+const getMapThumbnailUrl = (mediaItem: CachedGooglePhotosMediaItem): string|null => {
+  if (isPhoto(mediaItem)) {
+    const cache = mediaItem.cache as GooglePhotosPhotoCache
+
+    return cache
+      ? cache.thumbnail.url
+      : null
+  } else if (isVideo(mediaItem)) {
+    const cache = mediaItem.cache as GooglePhotosVideoCache
+
+    return cache
+      ? cache.posterPhoto.thumbnail.url
+      : null
+  }
+
+  return null
+}
 
 export default function Map({ mediaItems, activeMediaItemId, setActiveMediaItemIdWithScrollTo }: { mediaItems: CachedGooglePhotosMediaItem[], activeMediaItemId?: string, setActiveMediaItemIdWithScrollTo: (activeItemId: string|undefined) => void }) {
   const mapContainer = useRef(null)
@@ -29,7 +48,7 @@ export default function Map({ mediaItems, activeMediaItemId, setActiveMediaItemI
           element.style.width = tailwindConfig?.theme?.width?.['16'] as string
           element.style.height = tailwindConfig?.theme?.height?.['16'] as string
 
-          const thumbnailUrl = mediaItem.thumbnailUrl
+          const thumbnailUrl = getMapThumbnailUrl(mediaItem)
           if (thumbnailUrl) {
             element.style.backgroundImage = `url(${thumbnailUrl})`
             element.style.backgroundSize = '100%'
