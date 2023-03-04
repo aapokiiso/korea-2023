@@ -1,6 +1,5 @@
 - CI
 - Google Photos OAuth cloud functions
-- Google Photos rate limits handling
 - Accessibility
 - PWA/Manifest
 - Dark mode

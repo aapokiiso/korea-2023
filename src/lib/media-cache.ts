@@ -4,6 +4,9 @@ import * as crypto from 'node:crypto'
 import getConfig from 'next/config'
 import * as mime from 'mime-types'
 import { isPhoto, isVideo } from './google-photos-media-type'
+import fetchBuilder from 'fetch-retry'
+
+const fetch = fetchBuilder(global.fetch)
 
 const publicDir = getConfig().serverRuntimeConfig.publicDir
 const cacheDir = `${publicDir}/media`
@@ -155,6 +158,26 @@ const writeConfigToCache = async (config: Record<string, GooglePhotosPhotoCache|
   }
 }
 
+const fetchWithBackOff = (url: string): Promise<Response> => {
+  return fetch(url, {
+    retryOn: function(attempt, error, response) {
+      if (attempt >= 3) return false
+
+      const statusCode = response?.status ?? 0
+      if (error !== null || statusCode === 429 || statusCode >= 500) {
+        console.warn(`Retrying media cache request, attempt number ${attempt + 1}, URL ${url}`)
+
+        return true
+      }
+
+      return false
+    },
+    retryDelay(attempt) {
+      return Math.pow(2, attempt) * 1000
+    },
+  })
+}
+
 export const cacheItems = async (mediaItems: GooglePhotosMediaItem[]): Promise<CachedGooglePhotosMediaItem[]> => {
   const version = calculateVersion(mediaItems)
   const cacheVersion = await readVersionFromCache()
@@ -171,17 +194,17 @@ export const cacheItems = async (mediaItems: GooglePhotosMediaItem[]): Promise<C
         {
           role: PhotoRole.THUMBNAIL,
           aspectRatio: 1,
-          request: fetch(getPhotoUrl(mediaItem, { width: PHOTO_WIDTH[PhotoRole.THUMBNAIL], height: PHOTO_WIDTH[PhotoRole.THUMBNAIL], isCrop: true })),
+          request: fetchWithBackOff(getPhotoUrl(mediaItem, { width: PHOTO_WIDTH[PhotoRole.THUMBNAIL], height: PHOTO_WIDTH[PhotoRole.THUMBNAIL], isCrop: true })),
         },
         {
           role: PhotoRole.TIMELINE,
           aspectRatio,
-          request: fetch(getPhotoUrl(mediaItem, { width: PHOTO_WIDTH[PhotoRole.TIMELINE] })),
+          request: fetchWithBackOff(getPhotoUrl(mediaItem, { width: PHOTO_WIDTH[PhotoRole.TIMELINE] })),
         },
         {
           role: PhotoRole.FULLSCREEN,
           aspectRatio,
-          request: fetch(getPhotoUrl(mediaItem, { width: PHOTO_WIDTH[PhotoRole.FULLSCREEN] })),
+          request: fetchWithBackOff(getPhotoUrl(mediaItem, { width: PHOTO_WIDTH[PhotoRole.FULLSCREEN] })),
         },
       ]
 
@@ -221,10 +244,8 @@ export const cacheItems = async (mediaItems: GooglePhotosMediaItem[]): Promise<C
             fullscreen: fullscreenConfig,
           }
         } else if (isVideo(mediaItem) && isVideoReady(mediaItem)) {
-          let videoUrl = null
-
           try {
-            const response = await fetch(getVideoUrl(mediaItem))
+            const response = await fetchWithBackOff(getVideoUrl(mediaItem))
             const buff = Buffer.from(await response.arrayBuffer())
 
             const mimeType = response.headers.get('Content-Type')
@@ -233,23 +254,19 @@ export const cacheItems = async (mediaItems: GooglePhotosMediaItem[]): Promise<C
             if (buff.length && fileExtension) {
               await writeVideoToCache(mediaItem, buff, fileExtension)
 
-              videoUrl = `${cacheUrlPath}/video/${mediaItem.id}.${fileExtension}`
+              mediaItemCacheConfig = {
+                video: {
+                  url: `${cacheUrlPath}/video/${mediaItem.id}.${fileExtension}`,
+                },
+                posterPhoto: {
+                  thumbnail: thumbnailConfig,
+                  timeline: timelineConfig,
+                  fullscreen: fullscreenConfig,
+                },
+              }
             }
           } catch (e) {
             console.error(e)
-          }
-
-          if (videoUrl) {
-            mediaItemCacheConfig = {
-              video: {
-                url: videoUrl,
-              },
-              posterPhoto: {
-                thumbnail: thumbnailConfig,
-                timeline: timelineConfig,
-                fullscreen: fullscreenConfig,
-              },
-            }
           }
         }
       }
@@ -273,10 +290,12 @@ export const cacheItems = async (mediaItems: GooglePhotosMediaItem[]): Promise<C
     const cacheConfig = await readConfigFromCache()
 
     cachedMediaItems = cacheConfig
-      ? mediaItems.map(mediaItem => ({
-        ...mediaItem,
-        cache: cacheConfig[mediaItem.id],
-      }))
+      ? mediaItems
+        .filter(mediaItem => cacheConfig[mediaItem.id])
+        .map(mediaItem => ({
+          ...mediaItem,
+          cache: cacheConfig[mediaItem.id],
+        }))
       : []
   }
 
