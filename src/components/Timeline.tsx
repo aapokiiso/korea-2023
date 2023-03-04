@@ -110,6 +110,7 @@ export default function Timeline({ sortedMediaItems, isVisible, activeMediaItemI
                   activeItemRef={activeItemRef}
                   setActiveItemId={setActiveMediaItemIdWithScrollTo}
                   itemVisibilityObserver={itemVisibilityObserver}
+                  setActiveMediaItemIdWithScrollTo={setActiveMediaItemIdWithScrollTo}
                 />
               )
             })}

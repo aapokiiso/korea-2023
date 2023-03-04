@@ -42,7 +42,14 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
     }
   }
 
+  const activeMediaItemScrollToWaitTimeout = useRef<NodeJS.Timeout|null>(null)
+
   const setActiveMediaItemIdWithScrollTo = (activeMediaItemId: string|undefined) => {
+    if (activeMediaItemScrollToWaitTimeout.current) {
+      clearTimeout(activeMediaItemScrollToWaitTimeout.current)
+      activeMediaItemScrollToWaitTimeout.current = null
+    }
+
     setActiveMediaItemId(activeMediaItemId)
 
     if (activeMediaItemId) {
@@ -61,15 +68,13 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
         offsetTop: -1 * (parseToPx(tailwindConfig.theme?.margin?.['20'] || '') ?? 0),
       })
 
+      setNeedScrollToActiveItem(false)
+
       // Wait a bit for scrolling to finish before releasing control. Duration
       // is user agent specific, so this timeout is just a rough estimate.
-      setTimeout(() => {
-        setNeedScrollToActiveItem(false)
+      activeMediaItemScrollToWaitTimeout.current = setTimeout(() => {
         setIsScrollingUserControlled(true)
-      }, 500)
-    } else {
-      setNeedScrollToActiveItem(false)
-      setIsScrollingUserControlled(true)
+      }, 1000)
     }
   }, [needScrollToActiveItem])
 
@@ -94,6 +99,16 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
 
   const canLoadMap = isMapBackgroundVisible || !isTimelineVisible
 
+  const isMapLoaded = useRef<boolean>(false)
+  useEffect(() => {
+    // Map already marked as loaded
+    if (isMapLoaded.current) return
+
+    if (canLoadMap) {
+      isMapLoaded.current = true
+    }
+  }, [canLoadMap])
+
   return (
     <>
       <Head>
@@ -106,7 +121,7 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
         <p>Loading map...</p>
       </div>
       <Suspense>
-        {canLoadMap && <Map
+        {(isMapLoaded.current || canLoadMap) && <Map
           mediaItems={sortedMediaItems}
           activeMediaItemId={activeMediaItemId}
           setActiveMediaItemIdWithScrollTo={setActiveMediaItemIdWithScrollTo}

@@ -6,7 +6,7 @@ import { getDateTitle } from '../utils/date'
 import { scrollIntoView } from '../utils/scroll-into-view'
 import TimelineItem from './TimelineItem'
 
-export default function TimelineItemGroup({ date, items, activeItemId, activeItemRef, setActiveItemId, itemVisibilityObserver }: { date: string, items: CachedGooglePhotosMediaItem[], activeItemId?: string, activeItemRef?: MutableRefObject<HTMLElement|null>, setActiveItemId: (activeItemId: string|undefined) => void, itemVisibilityObserver?: IntersectionObserver }) {
+export default function TimelineItemGroup({ date, items, activeItemId, activeItemRef, setActiveItemId, itemVisibilityObserver, setActiveMediaItemIdWithScrollTo }: { date: string, items: CachedGooglePhotosMediaItem[], activeItemId?: string, activeItemRef?: MutableRefObject<HTMLElement|null>, setActiveItemId: (activeItemId: string|undefined) => void, itemVisibilityObserver?: IntersectionObserver, setActiveMediaItemIdWithScrollTo: (activeItemId: string|undefined) => void }) {
   const sortedItems = sortByTimeDescending(items)
 
   const startLocationLabel = sortedItems.length ? getLocationLabel(sortedItems[0]) : null
@@ -18,8 +18,9 @@ export default function TimelineItemGroup({ date, items, activeItemId, activeIte
 
   const groupContainer = useRef<HTMLDivElement>(null)
   const handleHeaderClick: MouseEventHandler<HTMLElement> = (event) => {
-    if (groupContainer.current) {
-      scrollIntoView(groupContainer.current)
+    const [firstItem] = sortedItems
+    if (firstItem) {
+      setActiveMediaItemIdWithScrollTo(firstItem.id)
     }
   }
 
