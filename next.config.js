@@ -1,18 +1,18 @@
 /** @type {import('next').NextConfig} */
+
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.NEXT_BUNDLE_ANALYZER_ENABLED,
+})
+
 const nextConfig = {
   reactStrictMode: true,
   pageExtensions: ['tsx', 'ts'],
   images: {
-    unoptimized: true,
-    remotePatterns: [
-      {
-        hostname: '*.googleusercontent.com',
-      },
-    ],
+    unoptimized: true, // Required for static site generation
   },
   serverRuntimeConfig: {
     publicDir: `${__dirname}/public`,
   },
 }
 
-module.exports = nextConfig
+module.exports = withBundleAnalyzer(nextConfig)

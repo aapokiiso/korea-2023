@@ -6,6 +6,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        'map-background': '#1f1f1f',
         'accent-primary': {
           '50': '#fef3f2',
           '100': '#fde7e6',

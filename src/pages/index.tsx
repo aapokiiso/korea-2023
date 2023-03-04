@@ -3,8 +3,7 @@ import { GooglePhotosMediaItem, listAlbumMedia } from '@/lib/google-photos-api'
 
 import { getCoordinates, getLocationLabel } from '../lib/media-item-enrichment'
 import { CachedGooglePhotosMediaItem, cacheItems } from '../lib/media-cache'
-import Map from '../components/Map'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, lazy, Suspense } from 'react'
 import Timeline from '../components/Timeline'
 import { sortByTimeDescending } from '../utils/sort-media-items'
 import MapControls from '../components/MapControls'
@@ -12,6 +11,8 @@ import { scrollIntoView } from '../utils/scroll-into-view'
 import { parseToPx, resolveTailwindConfig } from '../utils/css'
 
 const tailwindConfig = resolveTailwindConfig()
+
+const Map = lazy(() => import('../components/Map'))
 
 export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGooglePhotosMediaItem[] }) {
   const [activeMediaItemId, setActiveMediaItemId] = useState<string|undefined>()
@@ -61,11 +62,11 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
       })
 
       // Wait a bit for scrolling to finish before releasing control. Duration
-      // is user agent specific, so 250ms is just a good enough estimate.
+      // is user agent specific, so this timeout is just a rough estimate.
       setTimeout(() => {
         setNeedScrollToActiveItem(false)
         setIsScrollingUserControlled(true)
-      }, 250)
+      }, 500)
     } else {
       setNeedScrollToActiveItem(false)
       setIsScrollingUserControlled(true)
@@ -80,6 +81,19 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
     }
   }
 
+  const [isMapBackgroundVisible, setIsMapBackgroundVisible] = useState<boolean>(() => false)
+  useEffect(() => {
+    const breakpoints = tailwindConfig?.theme?.screens as Record<string, string>
+
+    const isScreenMd = breakpoints.md
+      ? window.matchMedia(`(min-width: ${breakpoints.md})`).matches
+      : false
+
+    setIsMapBackgroundVisible(isScreenMd)
+  }, [])
+
+  const canLoadMap = isMapBackgroundVisible || !isTimelineVisible
+
   return (
     <>
       <Head>
@@ -88,11 +102,16 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Map
-        mediaItems={sortedMediaItems}
-        activeMediaItemId={activeMediaItemId}
-        setActiveMediaItemIdWithScrollTo={setActiveMediaItemIdWithScrollTo}
-      />
+      <div className="fixed w-full h-full flex items-center justify-center bg-map-background text-neutral-200">
+        <p>Loading map...</p>
+      </div>
+      <Suspense>
+        {canLoadMap && <Map
+          mediaItems={sortedMediaItems}
+          activeMediaItemId={activeMediaItemId}
+          setActiveMediaItemIdWithScrollTo={setActiveMediaItemIdWithScrollTo}
+        />}
+      </Suspense>
       <main className="xl:container mx-auto p-4 grid pointer-events-none relative z-10">
         <div className="w-full max-w-lg justify-self-end pointer-events-auto">
           <Timeline
