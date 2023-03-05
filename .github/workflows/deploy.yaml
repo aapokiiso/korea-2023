@@ -24,10 +24,10 @@ jobs:
           # If source files changed but packages didn't, rebuild from a prior cache.
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
-      - uses: actions/cache@v3
+      - uses: actions/cache/restore@v3
         with:
-          path: out
-          key: ${{ runner.os }}-out
+          path: public/media
+          key: ${{ runner.os }}-media
       - run: npm ci
       - run: npm run build
         env:
@@ -46,3 +46,7 @@ jobs:
           path: out
           destination: "${{ vars.GOOGLE_STORAGE_BUCKET_NAME }}"
           parent: false
+      - uses: actions/cache/save@v3
+        with:
+          path: public/media
+          key: ${{ runner.os }}-media
