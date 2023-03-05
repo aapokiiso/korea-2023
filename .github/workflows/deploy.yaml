@@ -25,7 +25,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
       # https://github.com/actions/cache/blob/main/tips-and-workarounds.md#update-a-cache
-      - uses: actions/cache/restore@v3
+      - uses: actions/cache@v3
         with:
           path: public/media
           key: ${{ runner.os }}-media-${{ github.run_id }}
