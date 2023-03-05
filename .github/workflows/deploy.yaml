@@ -49,4 +49,3 @@ jobs:
           path: out
           destination: "${{ vars.GOOGLE_STORAGE_BUCKET_NAME }}"
           parent: false
-          gzip: false
