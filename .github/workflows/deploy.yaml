@@ -1,0 +1,40 @@
+name: Deploy
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: out
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          GOOGLE_OAUTH2_CLIENT_ID: "${{ env.GOOGLE_OAUTH2_CLIENT_ID }}"
+          GOOGLE_OAUTH2_CLIENT_SECRET: "${{ secrets.GOOGLE_OAUTH2_CLIENT_SECRET }}"
+          GOOGLE_OAUTH2_CLIENT_REDIRECT_URL: "${{ env.GOOGLE_OAUTH2_CLIENT_REDIRECT_URL }}"
+          GOOGLE_OAUTH2_CLIENT_REFRESH_TOKEN: "${{ secrets.GOOGLE_OAUTH2_CLIENT_REFRESH_TOKEN }}"
+          GOOGLE_PHOTOS_ALBUM_ID: "${{ env.GOOGLE_PHOTOS_ALBUM_ID }}"
+          NEXT_PUBLIC_DISPLAY_TIMEZONE: "${{ env.NEXT_PUBLIC_DISPLAY_TIMEZONE }}"
+          NEXT_PUBLIC_MAPBOX_TOKEN: "${{ env.NEXT_PUBLIC_MAPBOX_TOKEN }}"
+      - uses: google-github-actions/auth@v1
+        with:
+          credentials_json: "${{ secrets.GOOGLE_DEPLOY_SA_KEY }}"
+      - uses: google-github-actions/upload-cloud-storage@v1
+        with:
+          path: out
+          destination: "${{ env.GOOGLE_STORAGE_BUCKET_NAME }}"
+          parent: false
+      - uses: actions/upload-artifact@v3
+        with:
+          name: out
+          path: out
