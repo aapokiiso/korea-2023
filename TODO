@@ -1,5 +1,5 @@
-- CI
 - Google Photos OAuth cloud functions
+- Only download new images
 - Accessibility
 - PWA/Manifest
 - Dark mode
