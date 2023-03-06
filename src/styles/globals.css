@@ -29,9 +29,3 @@ a {
 .mapboxgl-marker-active {
   opacity: 1 !important;
 }
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-}
