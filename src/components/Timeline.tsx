@@ -104,7 +104,6 @@ export default function Timeline({ sortedMediaItems, isVisible, activeMediaItemI
               return (
                 <TimelineItemGroup
                   key={day}
-                  date={day}
                   items={itemsByDay[day]}
                   activeItemId={activeMediaItemId}
                   activeItemRef={activeItemRef}
