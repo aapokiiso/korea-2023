@@ -3,7 +3,7 @@ import { Dialog, Transition  } from '@headlessui/react'
 import Image from 'next/image'
 import { XMarkIcon } from '@heroicons/react/20/solid'
 import { CachedGooglePhotosMediaItem, GooglePhotosPhotoCache } from '../lib/media-cache'
-import { isPhoto } from '../lib/google-photos-media-type'
+import { isPhoto } from '../lib/google-photos-media'
 
 export default function FullscreenItem({ item, isOpen, setIsOpen }: { item: CachedGooglePhotosMediaItem, isOpen: boolean, setIsOpen: Dispatch<SetStateAction<boolean>> }) {
   let mediaElement: JSX.Element|null = null

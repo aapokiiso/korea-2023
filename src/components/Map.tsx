@@ -4,7 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { getCoordinates } from '../lib/media-item-enrichment'
 import { resolveTailwindConfig } from '../utils/css'
 import { CachedGooglePhotosMediaItem, GooglePhotosPhotoCache, GooglePhotosVideoCache } from '../lib/media-cache'
-import { isPhoto, isVideo } from '../lib/google-photos-media-type'
+import { isPhoto, isVideo } from '../lib/google-photos-media'
 
 const tailwindConfig = resolveTailwindConfig()
 
@@ -13,13 +13,13 @@ const getMapThumbnailUrl = (mediaItem: CachedGooglePhotosMediaItem): string|null
     const cache = mediaItem.cache as GooglePhotosPhotoCache
 
     return cache
-      ? cache.thumbnail.url
+      ? cache.mapThumbnail.url
       : null
   } else if (isVideo(mediaItem)) {
     const cache = mediaItem.cache as GooglePhotosVideoCache
 
     return cache
-      ? cache.posterPhoto.thumbnail.url
+      ? cache.posterPhoto.mapThumbnail.url
       : null
   }
 

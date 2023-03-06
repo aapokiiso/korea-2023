@@ -1,98 +1,84 @@
-import { GooglePhotosMediaItem, GooglePhotosVideoMetadata } from './google-photos-api'
+import { GooglePhotosMediaItem } from './google-photos-api'
 import * as fs from 'fs/promises'
-import * as crypto from 'node:crypto'
 import getConfig from 'next/config'
 import * as mime from 'mime-types'
-import { isPhoto, isVideo } from './google-photos-media-type'
-import fetchBuilder from 'fetch-retry'
-
-const fetch = fetchBuilder(global.fetch)
+import { getAspectRatio, isPhoto, isReadyVideo } from './google-photos-media'
+import fetchWithBackOff from './fetch-with-back-off'
 
 const publicDir = getConfig().serverRuntimeConfig.publicDir
 const cacheDir = `${publicDir}/media`
 const cacheUrlPath = '/media'
 
 enum PhotoRole {
-  THUMBNAIL = 'thumbnail',
+  MAP_THUMBNAIL = 'map-thumbnail',
   TIMELINE = 'timeline',
   FULLSCREEN = 'fullscreen',
 }
 
 const PHOTO_WIDTH = {
-  [PhotoRole.THUMBNAIL]: 256,
+  [PhotoRole.MAP_THUMBNAIL]: 256,
   [PhotoRole.TIMELINE]: 1080,
   [PhotoRole.FULLSCREEN]: 2560,
 }
 
-export interface GooglePhotosPhotoCache {
-  thumbnail: {
-    url: string,
-    metadata: {
-      width: number,
-      height: number,
-    },
-  },
-  timeline: {
-    url: string,
-    metadata: {
-      width: number,
-      height: number,
-    },
-  },
-  fullscreen: {
-    url: string,
-    metadata: {
-      width: number,
-      height: number,
-    },
+export interface GooglePhotosCachedPhotoConfig {
+  url: string,
+  metadata: {
+    width: number,
+    height: number,
   },
 }
 
+export interface GooglePhotosPhotoCache {
+  mapThumbnail: GooglePhotosCachedPhotoConfig,
+  timeline: GooglePhotosCachedPhotoConfig,
+  fullscreen: GooglePhotosCachedPhotoConfig,
+}
+
+export interface GooglePhotosCachedVideoConfig {
+  url: string,
+}
+
 export interface GooglePhotosVideoCache {
-  video: {
-    url: string,
+  video: GooglePhotosCachedVideoConfig,
+  posterPhoto: {
+    mapThumbnail: GooglePhotosCachedPhotoConfig,
+    timeline: GooglePhotosCachedPhotoConfig,
   },
-  posterPhoto: GooglePhotosPhotoCache,
 }
 
 export interface CachedGooglePhotosMediaItem extends GooglePhotosMediaItem {
   cache?: GooglePhotosPhotoCache|GooglePhotosVideoCache,
 }
 
-const writeEmptyCacheDir = async (): Promise<void> => {
-  await fs.rm(cacheDir, { recursive: true, force: true })
-  await fs.mkdir(cacheDir)
-  await fs.mkdir(`${cacheDir}/${PhotoRole.THUMBNAIL}`)
-  await fs.mkdir(`${cacheDir}/${PhotoRole.TIMELINE}`)
-  await fs.mkdir(`${cacheDir}/${PhotoRole.FULLSCREEN}`)
-  await fs.mkdir(`${cacheDir}/video`)
+const initCacheDir = async (): Promise<void> => {
+  await fs.mkdir(`${cacheDir}/photo/${PhotoRole.MAP_THUMBNAIL}`, { recursive: true })
+  await fs.mkdir(`${cacheDir}/photo/${PhotoRole.TIMELINE}`, { recursive: true })
+  await fs.mkdir(`${cacheDir}/photo/${PhotoRole.FULLSCREEN}`, { recursive: true })
+  await fs.mkdir(`${cacheDir}/video`, { recursive: true })
 }
 
-const readVersionFromCache = async (): Promise<string|null> => {
+const readConfigFromCache = async (): Promise<Record<string, GooglePhotosPhotoCache|GooglePhotosVideoCache>> => {
   try {
-    return await fs.readFile(`${cacheDir}/version.txt`, { encoding: 'utf8' })
+    const json = await fs.readFile(`${cacheDir}/config.json`, { encoding: 'utf8' })
+
+    return JSON.parse(json)
   } catch (e) {
     console.error(e)
 
-    return null
+    return {}
   }
 }
 
-const writeVersionToCache = async (version: string): Promise<void> => {
+const writeConfigToCache = async (config: Record<string, GooglePhotosPhotoCache|GooglePhotosVideoCache>): Promise<void> => {
   try {
-    await fs.writeFile(`${cacheDir}/version.txt`, version)
+    await fs.writeFile(`${cacheDir}/config.json`, JSON.stringify(config))
   } catch (e) {
     console.error(e)
   }
 }
 
-const calculateVersion = (mediaItems: GooglePhotosMediaItem[]): string => {
-  return crypto.createHash('sha256')
-    .update(mediaItems.map(({ id }) => id).sort().join(','))
-    .digest('hex')
-}
-
-const getPhotoUrl = (photo: GooglePhotosMediaItem, { width, height, isCrop = false }: {width?: number, height?: number, isCrop?: boolean}): string => {
+const getPhotoUrl = (photo: GooglePhotosMediaItem, { width, height, isCrop = false }: { width?: number, height?: number, isCrop?: boolean }): string => {
   const params: string[] = []
 
   if (width) {
@@ -113,195 +99,150 @@ const getPhotoUrl = (photo: GooglePhotosMediaItem, { width, height, isCrop = fal
   return photo.baseUrl + (params.length ? `=${params.join('-')}` : '')
 }
 
-const getVideoUrl = (video: GooglePhotosMediaItem): string => {
-  return video.baseUrl + '=dv'
+const writePhotoToCache = async (photo: GooglePhotosMediaItem, role: PhotoRole, buff: Buffer, fileExtension: string): Promise<void> => {
+  await fs.writeFile(`${cacheDir}/photo/${role}/${photo.id}.${fileExtension}`, buff)
 }
 
-const isVideoReady = (mediaItem: GooglePhotosMediaItem): boolean => {
-  if (isVideo(mediaItem)) {
-    const metadata = mediaItem.mediaMetadata as GooglePhotosVideoMetadata
+const cachePhoto = async (mediaItem: GooglePhotosMediaItem, role: PhotoRole): Promise<GooglePhotosCachedPhotoConfig> => {
+  const photoConfig = role !== PhotoRole.MAP_THUMBNAIL
+    ? {
+      width: PHOTO_WIDTH[PhotoRole.TIMELINE],
+    }
+    : {
+      width: PHOTO_WIDTH[PhotoRole.MAP_THUMBNAIL],
+      height: PHOTO_WIDTH[PhotoRole.MAP_THUMBNAIL],
+      isCrop: true,
+    }
 
-    return metadata.video.status === 'READY'
+  const response = await fetchWithBackOff(getPhotoUrl(mediaItem, photoConfig))
+  const buff = Buffer.from(await response.arrayBuffer())
+
+  const mimeType = response.headers.get('Content-Type')
+  const fileExtension = mimeType && mime.extension(mimeType)
+
+  if (!buff.length || !fileExtension) {
+    throw new Error('Invalid photo')
   }
 
-  return false
+  await writePhotoToCache(mediaItem, role, buff, fileExtension)
+
+  const width = PHOTO_WIDTH[role]
+  const aspectRatio = role !== PhotoRole.MAP_THUMBNAIL ? getAspectRatio(mediaItem) : 1
+
+  return {
+    url: `${cacheUrlPath}/photo/${role}/${mediaItem.id}.${fileExtension}`,
+    metadata: {
+      width: width,
+      height: width * aspectRatio,
+    },
+  }
 }
 
-const getAspectRatio = (item: GooglePhotosMediaItem): number =>
-  Number(item.mediaMetadata.height) / Number(item.mediaMetadata.width)
-
-const writePhotoToCache = async (photo: GooglePhotosMediaItem, role: PhotoRole, buff: Buffer, fileExtension: string): Promise<void> => {
-  await fs.writeFile(`${cacheDir}/${role}/${photo.id}.${fileExtension}`, buff)
+const getVideoUrl = (video: GooglePhotosMediaItem): string => {
+  return video.baseUrl + '=dv'
 }
 
 const writeVideoToCache = async (video: GooglePhotosMediaItem, buff: Buffer, fileExtension: string): Promise<void> => {
   await fs.writeFile(`${cacheDir}/video/${video.id}.${fileExtension}`, buff)
 }
 
-const readConfigFromCache = async (): Promise<Record<string, GooglePhotosPhotoCache|GooglePhotosVideoCache>|null> => {
-  try {
-    const json = await fs.readFile(`${cacheDir}/config.json`, { encoding: 'utf8' })
+const cacheVideo = async (mediaItem: GooglePhotosMediaItem): Promise<GooglePhotosCachedVideoConfig> => {
+  const response = await fetchWithBackOff(getVideoUrl(mediaItem))
+  const buff = Buffer.from(await response.arrayBuffer())
 
-    return JSON.parse(json)
-  } catch (e) {
-    console.error(e)
+  const mimeType = response.headers.get('Content-Type')
+  const fileExtension = mimeType && mime.extension(mimeType)
 
-    return null
+  if (!buff.length || !fileExtension) {
+    throw new Error('Invalid video')
   }
-}
 
-const writeConfigToCache = async (config: Record<string, GooglePhotosPhotoCache|GooglePhotosVideoCache>): Promise<void> => {
-  try {
-    await fs.writeFile(`${cacheDir}/config.json`, JSON.stringify(config))
-  } catch (e) {
-    console.error(e)
+  await writeVideoToCache(mediaItem, buff, fileExtension)
+
+  return {
+    url: `${cacheUrlPath}/video/${mediaItem.id}.${fileExtension}`,
   }
-}
-
-const fetchWithBackOff = (url: string): Promise<Response> => {
-  return fetch(url, {
-    retryOn: function(attempt, error, response) {
-      if (attempt >= 3) return false
-
-      const statusCode = Number(response?.status)
-      if (error !== null || statusCode === 429 || statusCode >= 500) {
-        console.warn(`Retrying media cache request, attempt number ${attempt + 1}, URL ${url}`)
-
-        return true
-      }
-
-      return false
-    },
-    retryDelay(attempt, error, response) {
-      const statusCode = Number(response?.status)
-
-      return statusCode === 429
-        ? 30000 // Google requires min 30s delay for rate limit retries
-        : Math.pow(2, attempt) * 1000 // Exponential back-off
-    },
-  })
 }
 
 export const cacheItems = async (mediaItems: GooglePhotosMediaItem[]): Promise<CachedGooglePhotosMediaItem[]> => {
-  const version = calculateVersion(mediaItems)
-  const cacheVersion = await readVersionFromCache()
+  await initCacheDir()
 
-  let cachedMediaItems: CachedGooglePhotosMediaItem[] = []
-  if (version !== cacheVersion) {
-    const cacheConfig: Record<string, GooglePhotosPhotoCache|GooglePhotosVideoCache> = {}
+  const cacheConfig = await readConfigFromCache()
 
-    await writeEmptyCacheDir()
+  const uncachedMediaItems = mediaItems.filter(mediaItem => !cacheConfig[mediaItem.id])
 
-    for (const mediaItem of mediaItems) {
-      const aspectRatio = getAspectRatio(mediaItem)
-      const requests = [
-        {
-          role: PhotoRole.THUMBNAIL,
-          aspectRatio: 1,
-          request: fetchWithBackOff(getPhotoUrl(mediaItem, { width: PHOTO_WIDTH[PhotoRole.THUMBNAIL], height: PHOTO_WIDTH[PhotoRole.THUMBNAIL], isCrop: true })),
-        },
-        {
-          role: PhotoRole.TIMELINE,
-          aspectRatio,
-          request: fetchWithBackOff(getPhotoUrl(mediaItem, { width: PHOTO_WIDTH[PhotoRole.TIMELINE] })),
-        },
-        {
-          role: PhotoRole.FULLSCREEN,
-          aspectRatio,
-          request: fetchWithBackOff(getPhotoUrl(mediaItem, { width: PHOTO_WIDTH[PhotoRole.FULLSCREEN] })),
-        },
-      ]
+  console.info(`Start media caching: ${uncachedMediaItems.length} ouf of ${mediaItems.length} media items are uncached.`)
 
-      const [thumbnailConfig, timelineConfig, fullscreenConfig] = await Promise.all(
-        requests.map(async ({ role, aspectRatio, request }) => {
-          try {
-            const response = await request
-            const buff = Buffer.from(await response.arrayBuffer())
+  let counter = 0
+  // Cache media items sequentially to avoid rate limits.
+  for (const mediaItem of uncachedMediaItems) {
+    if (isPhoto(mediaItem)) {
+      console.info(`Uncached media item ${mediaItem.id} is a photo, caching.`)
 
-            const mimeType = response.headers.get('Content-Type')
-            const fileExtension = mimeType && mime.extension(mimeType)
+      try {
+        const [
+          thumbnailPhotoCacheConfig,
+          timelinePhotoCacheConfig,
+          fullscreenPhotoCacheConfig,
+        ] = await Promise.all(
+          [
+            PhotoRole.MAP_THUMBNAIL,
+            PhotoRole.TIMELINE,
+            PhotoRole.FULLSCREEN,
+          ].map(role => cachePhoto(mediaItem, role))
+        )
 
-            if (buff.length && fileExtension) {
-              await writePhotoToCache(mediaItem, role, buff, fileExtension)
-              const width = PHOTO_WIDTH[role]
-
-              return {
-                url: `${cacheUrlPath}/${role}/${mediaItem.id}.${fileExtension}`,
-                metadata: {
-                  width: width,
-                  height: width * aspectRatio,
-                },
-              }
-            }
-          } catch (e) {
-            console.error(e)
-          }
-        })
-      )
-
-      let mediaItemCacheConfig: GooglePhotosPhotoCache|GooglePhotosVideoCache|null = null
-      if (thumbnailConfig && timelineConfig && fullscreenConfig) {
-        if (isPhoto(mediaItem)) {
-          mediaItemCacheConfig = {
-            thumbnail: thumbnailConfig,
-            timeline: timelineConfig,
-            fullscreen: fullscreenConfig,
-          }
-        } else if (isVideo(mediaItem) && isVideoReady(mediaItem)) {
-          try {
-            const response = await fetchWithBackOff(getVideoUrl(mediaItem))
-            const buff = Buffer.from(await response.arrayBuffer())
-
-            const mimeType = response.headers.get('Content-Type')
-            const fileExtension = mimeType && mime.extension(mimeType)
-
-            if (buff.length && fileExtension) {
-              await writeVideoToCache(mediaItem, buff, fileExtension)
-
-              mediaItemCacheConfig = {
-                video: {
-                  url: `${cacheUrlPath}/video/${mediaItem.id}.${fileExtension}`,
-                },
-                posterPhoto: {
-                  thumbnail: thumbnailConfig,
-                  timeline: timelineConfig,
-                  fullscreen: fullscreenConfig,
-                },
-              }
-            }
-          } catch (e) {
-            console.error(e)
-          }
+        cacheConfig[mediaItem.id] = {
+          mapThumbnail: thumbnailPhotoCacheConfig,
+          timeline: timelinePhotoCacheConfig,
+          fullscreen: fullscreenPhotoCacheConfig,
         }
-      }
 
-      if (mediaItemCacheConfig) {
-        cachedMediaItems = [
-          ...cachedMediaItems,
-          {
-            ...mediaItem,
-            cache: mediaItemCacheConfig,
+        counter++
+      } catch (e) {
+        console.error(`Failed to cache photo media item ${mediaItem.id}`, e)
+      }
+    } else if (isReadyVideo(mediaItem)) {
+      console.info(`Uncached media item ${mediaItem.id} is a video, caching.`)
+
+      try {
+        const videoCacheConfig = await cacheVideo(mediaItem)
+
+        const [
+          thumbnailPhotoCacheConfig,
+          timelinePhotoCacheConfig,
+        ] = await Promise.all(
+          [
+            PhotoRole.MAP_THUMBNAIL,
+            PhotoRole.TIMELINE,
+          ].map(role => cachePhoto(mediaItem, role))
+        )
+
+        cacheConfig[mediaItem.id] = {
+          video: videoCacheConfig,
+          posterPhoto: {
+            mapThumbnail: thumbnailPhotoCacheConfig,
+            timeline: timelinePhotoCacheConfig,
           },
-        ]
+        }
 
-        cacheConfig[mediaItem.id] = mediaItemCacheConfig
+        counter++
+      } catch (e) {
+        console.error(`Failed to cache video media item ${mediaItem.id}`, e)
       }
+    } else {
+      console.error(`Media item ${mediaItem.id} is not a photo or a ready video, skipping.`)
     }
-
-    writeVersionToCache(version)
-    writeConfigToCache(cacheConfig)
-  } else {
-    const cacheConfig = await readConfigFromCache()
-
-    cachedMediaItems = cacheConfig
-      ? mediaItems
-        .filter(mediaItem => cacheConfig[mediaItem.id])
-        .map(mediaItem => ({
-          ...mediaItem,
-          cache: cacheConfig[mediaItem.id],
-        }))
-      : []
   }
 
-  return cachedMediaItems
+  await writeConfigToCache(cacheConfig)
+
+  console.info(`End media caching: ${counter} ouf of ${uncachedMediaItems.length} uncached media items were successfully cached.`)
+
+  return mediaItems
+    .filter(mediaItem => cacheConfig[mediaItem.id])
+    .map(mediaItem => ({
+      ...mediaItem,
+      cache: cacheConfig[mediaItem.id],
+    }))
 }

@@ -5,7 +5,7 @@ import { MouseEventHandler, MutableRefObject, useEffect, useRef, useState } from
 import FullscreenItem from './FullscreenItem'
 import { resolveTailwindConfig } from '../utils/css'
 import { CachedGooglePhotosMediaItem, GooglePhotosPhotoCache, GooglePhotosVideoCache } from '../lib/media-cache'
-import { isPhoto, isVideo } from '../lib/google-photos-media-type'
+import { isPhoto, isVideo } from '../lib/google-photos-media'
 
 const tailwindConfig = resolveTailwindConfig()
 
