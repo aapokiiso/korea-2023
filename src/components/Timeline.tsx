@@ -83,7 +83,7 @@ export default function Timeline({ sortedMediaItems, isVisible, activeMediaItemI
     <Transition
       show={isVisible}
     >
-      <div className={`lg:hidden fixed inset-0 transition backdrop-blur ${isVisible ? 'backdrop-opacity-1' : 'backdrop-opacity-0'}`}></div>
+      <div className={`md:hidden fixed inset-0 transition backdrop-blur ${isVisible ? 'backdrop-opacity-1' : 'backdrop-opacity-0'}`}></div>
 
       <Transition.Child
         enter="ease-out duration-150"
@@ -117,7 +117,7 @@ export default function Timeline({ sortedMediaItems, isVisible, activeMediaItemI
         </div>
       </Transition.Child>
 
-      <div className="fixed z-10 bottom-4 right-4 xl:hidden">
+      <div className="fixed z-10 bottom-4 right-4 lg:hidden">
         <TimelineControls
           isFirstItemActive={sortedMediaItems[0]?.id === activeMediaItemId}
           isLastItemActive={sortedMediaItems[sortedMediaItems.length - 1]?.id === activeMediaItemId}

@@ -86,7 +86,7 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
     }
   }
 
-  const [isMapBackgroundVisible, setIsMapBackgroundVisible] = useState<boolean>(() => false)
+  const [isMapVisibleAsBackground, setIsMapVisibleAsBackground] = useState<boolean>(() => false)
   useEffect(() => {
     const breakpoints = tailwindConfig?.theme?.screens as Record<string, string>
 
@@ -94,10 +94,10 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
       ? window.matchMedia(`(min-width: ${breakpoints.md})`).matches
       : false
 
-    setIsMapBackgroundVisible(isScreenMd)
+    setIsMapVisibleAsBackground(isScreenMd)
   }, [])
 
-  const canLoadMap = isMapBackgroundVisible || !isTimelineVisible
+  const canLoadMap = isMapVisibleAsBackground || !isTimelineVisible
 
   const isMapLoaded = useRef<boolean>(false)
   useEffect(() => {
@@ -109,6 +109,12 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
     }
   }, [canLoadMap])
 
+  const loadingMapElement = (
+    <div className="fixed w-full h-full flex items-center justify-center text-neutral-200">
+      <p>Loading map...</p>
+    </div>
+  )
+
   return (
     <>
       <Head>
@@ -117,14 +123,12 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="fixed w-full h-full flex items-center justify-center bg-map-background text-neutral-200">
-        <p>Loading map...</p>
-      </div>
-      <Suspense>
+      <Suspense fallback={loadingMapElement}>
         {(isMapLoaded.current || canLoadMap) && <Map
           mediaItems={sortedMediaItems}
           activeMediaItemId={activeMediaItemId}
           setActiveMediaItemIdWithScrollTo={setActiveMediaItemIdWithScrollTo}
+          isMapVisibleAsBackground={isMapVisibleAsBackground}
         />}
       </Suspense>
       <main className="xl:container mx-auto p-4 grid pointer-events-none relative z-10">

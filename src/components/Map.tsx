@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import mapboxgl, { Map as MapboxMap, Marker } from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { getCoordinates } from '../lib/media-item-enrichment'
-import { resolveTailwindConfig } from '../utils/css'
+import { resolveTailwindConfig, parseToPx } from '../utils/css'
 import { CachedGooglePhotosMediaItem, GooglePhotosPhotoCache, GooglePhotosVideoCache } from '../lib/media-cache'
 import { isPhoto, isVideo } from '../lib/google-photos-media'
 
@@ -26,7 +26,7 @@ const getMapThumbnailUrl = (mediaItem: CachedGooglePhotosMediaItem): string|null
   return null
 }
 
-export default function Map({ mediaItems, activeMediaItemId, setActiveMediaItemIdWithScrollTo }: { mediaItems: CachedGooglePhotosMediaItem[], activeMediaItemId?: string, setActiveMediaItemIdWithScrollTo: (activeItemId: string|undefined) => void }) {
+export default function Map({ mediaItems, activeMediaItemId, setActiveMediaItemIdWithScrollTo, isMapVisibleAsBackground }: { mediaItems: CachedGooglePhotosMediaItem[], activeMediaItemId?: string, setActiveMediaItemIdWithScrollTo: (activeItemId: string|undefined) => void, isMapVisibleAsBackground: boolean }) {
   const mapContainer = useRef(null)
   const map = useRef<MapboxMap|null>(null)
 
@@ -115,11 +115,23 @@ export default function Map({ mediaItems, activeMediaItemId, setActiveMediaItemI
     const currentMap = map.current
 
     if (currentMap && activeMarker) {
+      // Left-offset map center equal to the width of timeline cards
+      // when map is shown as background for the timeline.
+      const timelineCardWidth = tailwindConfig.theme?.maxWidth?.lg
+      const rightOffset = isMapVisibleAsBackground && timelineCardWidth
+        ? parseToPx(timelineCardWidth)
+        : null
+
+      const padding = rightOffset !== null
+        ? { top: 0, right: rightOffset, bottom: 0, left: 0 }
+        : 0
+
       currentMap.flyTo({
         center: activeMarker.getLngLat(),
+        padding,
       })
     }
-  }, [markers, activeMarker])
+  }, [markers, activeMarker, isMapVisibleAsBackground])
 
   useEffect(() => {
     if (map.current || !mapContainer.current) return
