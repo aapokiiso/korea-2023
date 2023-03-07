@@ -96,24 +96,25 @@ export default function Timeline({ sortedMediaItems, isVisible, activeMediaItemI
       >
         <div className="pb-20">
           <header className="p-4 rounded bg-white border border-gray-200 shadow-lg">
-            <h1 className="text-3xl">Site title</h1>
+            <h1 className="text-3xl">Korea 2023</h1>
             <p>Site introduction goes here.</p>
           </header>
-          <div>
+          <ol>
             {sortedDays.map(day => {
               return (
-                <TimelineItemGroup
-                  key={day}
-                  items={itemsByDay[day]}
-                  activeItemId={activeMediaItemId}
-                  activeItemRef={activeItemRef}
-                  setActiveItemId={setActiveMediaItemIdWithScrollTo}
-                  itemVisibilityObserver={itemVisibilityObserver}
-                  setActiveMediaItemIdWithScrollTo={setActiveMediaItemIdWithScrollTo}
-                />
+                <li key={day}>
+                  <TimelineItemGroup
+                    items={itemsByDay[day]}
+                    activeItemId={activeMediaItemId}
+                    activeItemRef={activeItemRef}
+                    setActiveItemId={setActiveMediaItemIdWithScrollTo}
+                    itemVisibilityObserver={itemVisibilityObserver}
+                    setActiveMediaItemIdWithScrollTo={setActiveMediaItemIdWithScrollTo}
+                  />
+                </li>
               )
             })}
-          </div>
+          </ol>
         </div>
       </Transition.Child>
 

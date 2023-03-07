@@ -34,18 +34,19 @@ export default function TimelineItemGroup({ items, activeItemId, activeItemRef, 
           {locationLabel && <h3 className="text-accent-primary-200 md:ml-4">{locationLabel}</h3>}
         </div>
       </header>
-      <div className="pl-4 pr-2">
+      <ol className="pl-4 pr-2">
         {sortedItems.map(item => (
-          <TimelineItem
-            key={item.id}
-            item={item}
-            isActive={activeItemId === item.id}
-            activeItemRef={activeItemRef}
-            setActiveItemId={setActiveItemId}
-            visibilityObserver={itemVisibilityObserver}
-          />)
-        )}
-      </div>
+          <li key={item.id}>
+            <TimelineItem
+              item={item}
+              isActive={activeItemId === item.id}
+              activeItemRef={activeItemRef}
+              setActiveItemId={setActiveItemId}
+              visibilityObserver={itemVisibilityObserver}
+            />
+          </li>
+        ))}
+      </ol>
     </div>
   )
 }

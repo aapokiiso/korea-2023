@@ -13,7 +13,7 @@ export default function FullscreenItem({ item, isOpen, setIsOpen }: { item: Cach
     mediaElement = (
       <Image
         src={cache.fullscreen.url}
-        alt=""
+        alt="A timeline photo in fullscreen."
         width={cache.fullscreen.metadata.width}
         height={cache.fullscreen.metadata.height}
         className="rounded-2xl"

@@ -93,7 +93,7 @@ const getPhotoUrl = (photo: GooglePhotosMediaItem, { width, height, isCrop = fal
     params.push('c')
   }
 
-  // Removes video play button overlay from video poster images
+  // Removes video play button overlay from video poster photos
   params.push('no')
 
   return photo.baseUrl + (params.length ? `=${params.join('-')}` : '')

@@ -119,7 +119,7 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
     <>
       <Head>
         <title>Korea 2023</title>
-        <meta name="description" content="Image feed for a cycling trip in Korea in 2023." />
+        <meta name="description" content="Photo timeline of our cycling tour in Korea in spring 2023." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -131,8 +131,8 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
           isMapVisibleAsBackground={isMapVisibleAsBackground}
         />}
       </Suspense>
-      <main className="xl:container mx-auto p-4 grid pointer-events-none relative z-10">
-        <div className="w-full max-w-lg justify-self-end pointer-events-auto">
+      <div className="xl:container mx-auto p-4 grid pointer-events-none relative z-10">
+        <main className="w-full max-w-lg justify-self-end pointer-events-auto">
           <Timeline
             sortedMediaItems={sortedMediaItems}
             isVisible={isTimelineVisible}
@@ -142,8 +142,8 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
             isScrollingUserControlled={isScrollingUserControlled}
             setActiveMediaItemIdWithScrollTo={setActiveMediaItemIdWithScrollTo}
           />
-        </div>
-      </main>
+        </main>
+      </div>
       <div className="fixed bottom-4 left-4 lg:hidden z-10">
         <MapControls
           isTimelineVisible={isTimelineVisible}

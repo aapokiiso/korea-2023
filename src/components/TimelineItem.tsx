@@ -60,7 +60,7 @@ export default function TimelineItem({ item, isActive, activeItemRef, setActiveI
     mediaElement = (
       <Image
         src={cache.timeline.url}
-        alt=""
+        alt="A timeline photo. Click photo to open fullscreen when on a tablet or desktop device."
         width={cache.timeline.metadata.width}
         height={cache.timeline.metadata.height}
         className="rounded-2xl w-full"
@@ -86,22 +86,28 @@ export default function TimelineItem({ item, isActive, activeItemRef, setActiveI
 
   return mediaElement && (
     <>
-      <article
+      <figure
         ref={setRefs}
         data-id={item.id}
         className={`my-4 p-2 pt-4 bg-neutral-200 rounded-2xl shadow-lg overflow-hidden cursor-pointer transition-opacity ${isActive ? ' opacity-100' : 'opacity-60'}`}
         onClick={handleItemClick}
       >
         {mediaElement}
-        <div className="p-4">
+        <figcaption className="p-4">
           {description && <p className="whitespace-pre-wrap">{description}</p>}
           <p className="my-2">&mdash;</p>
           <div className="flex text-sm">
-            <p>{formatInDisplayTimeZone(item.mediaMetadata.creationTime, 'HH:mm')}</p>
-            <p className="ml-4 text-neutral-500">{getLocationLabel(item)}</p>
+            <p>
+              <span className="sr-only">Photo taken at</span>
+              <time dateTime={item.mediaMetadata.creationTime}>{formatInDisplayTimeZone(item.mediaMetadata.creationTime, 'HH:mm')}</time>
+            </p>
+            <p className="ml-4 text-neutral-500">
+              <span className="sr-only">Photo taken in</span>
+              <span>{getLocationLabel(item)}</span>
+            </p>
           </div>
-        </div>
-      </article>
+        </figcaption>
+      </figure>
       {isPhoto(item) && <FullscreenItem item={item} isOpen={isFullscreenOpen} setIsOpen={setIsFullscreenOpen} />}
     </>
   )
