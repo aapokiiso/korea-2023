@@ -75,5 +75,10 @@ export const listAlbumMedia = async (albumId: string, options?: GooglePhotosList
     }),
   })
 
-  return response.json()
+  const { mediaItems = [], nextPageToken } = await response.json()
+
+  return {
+    mediaItems,
+    nextPageToken,
+  }
 }

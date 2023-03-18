@@ -115,6 +115,9 @@ export default function Timeline({ sortedMediaItems, isVisible, activeMediaItemI
                 </li>
               )
             })}
+            {!sortedDays.length && <div className="my-4 p-4 bg-neutral-200 rounded-2xl shadow-lg">
+              <p>Nothing to see here yet :)</p>
+            </div>}
           </ol>
         </div>
       </Transition.Child>
