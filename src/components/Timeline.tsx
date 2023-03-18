@@ -95,9 +95,10 @@ export default function Timeline({ sortedMediaItems, isVisible, activeMediaItemI
         className="relative z-10"
       >
         <div className="pb-20">
-          <header className="p-4 rounded bg-white border border-gray-200 shadow-lg">
-            <h1 className="text-3xl">Korea 2023</h1>
-            <p>Site introduction goes here.</p>
+          <header className="p-4 rounded-2xl bg-map-background text-neutral-400 shadow-lg">
+            <h1 className="text-xl">Four Rivers Path and Beyond</h1>
+            <p className="mt-2">Photo timeline of a cycling tour in Korea in spring 2023.</p>
+            <p className="mt-2">All times are in Seoul time (UTC +9).</p>
           </header>
           <ol>
             {sortedDays.map(day => {

@@ -118,8 +118,8 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
   return (
     <>
       <Head>
-        <title>Korea 2023</title>
-        <meta name="description" content="Photo timeline of our cycling tour in Korea in spring 2023." />
+        <title>Four Rivers Path and Beyond</title>
+        <meta name="description" content="Photo timeline of a cycling tour in Korea in spring 2023." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -131,7 +131,7 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
           isMapVisibleAsBackground={isMapVisibleAsBackground}
         />}
       </Suspense>
-      <div className="xl:container mx-auto p-4 grid pointer-events-none relative z-10">
+      <div className="xl:container mx-auto p-4 md:pt-8 grid pointer-events-none relative z-10">
         <main className="w-full max-w-lg justify-self-end pointer-events-auto">
           <Timeline
             sortedMediaItems={sortedMediaItems}
