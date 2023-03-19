@@ -119,7 +119,7 @@ export default function Home({ sortedMediaItems }: { sortedMediaItems: CachedGoo
     <>
       <Head>
         <title>Four Rivers Path and Beyond</title>
-        <meta name="description" content="Photo timeline of a cycling tour in Korea in spring 2023." />
+        <meta name="description" content="Photo timeline of a bike tour in Korea in spring 2023." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
