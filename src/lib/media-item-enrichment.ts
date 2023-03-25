@@ -18,7 +18,7 @@ export const getGeographyMetadata = (mediaItem: GooglePhotosMediaItem): Record<s
   return metadataStr
     ? metadataStr
       .split('\n')
-      .map(row => row.split(':', 2))
+      .map(row => row.split(':', 2).map(item => item.trim()))
       .filter(keyValuePair => keyValuePair.length === 2)
       .reduce((acc: Record<string, string>, keyValuePair) => {
         acc[keyValuePair[0]] = keyValuePair[1]
