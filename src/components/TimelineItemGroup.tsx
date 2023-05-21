@@ -14,8 +14,12 @@ export default function TimelineItemGroup({ items, activeItemId, activeItemRef, 
   // Use any item's creation time as the date source, as they are already grouped to the same date.
   const date = sortedItems.length ? sortedItems[0].mediaMetadata.creationTime : null
 
-  const startLocationLabel = sortedItems.length ? getLocationLabel(sortedItems[sortedItems.length - 1]) : null
-  const endLocationLabel = sortedItems.length ? getLocationLabel(sortedItems[0]) : null
+  const startLocationLabel = sortedItems.length
+    ? getLocationLabel(sortedItems[isArchived() ? 0 : sortedItems.length - 1])
+    : null
+  const endLocationLabel = sortedItems.length
+    ? getLocationLabel(sortedItems[isArchived() ? sortedItems.length - 1 : 0])
+    : null
 
   const locationLabel = startLocationLabel && endLocationLabel
     ? (startLocationLabel !== endLocationLabel ? `${startLocationLabel} - ${endLocationLabel}` : startLocationLabel)
