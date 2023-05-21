@@ -14,3 +14,6 @@ export function groupByDay(items: GooglePhotosMediaItem[]): Record<string, Googl
 
 export const sortByTimeDescending = (items: GooglePhotosMediaItem[]): GooglePhotosMediaItem[] =>
   [...items].sort((a, b) => (new Date(b.mediaMetadata.creationTime)).getTime() - (new Date(a.mediaMetadata.creationTime)).getTime())
+
+export const sortByTimeAscending = (items: GooglePhotosMediaItem[]): GooglePhotosMediaItem[] =>
+  [...items].sort((a, b) => (new Date(a.mediaMetadata.creationTime)).getTime() - (new Date(b.mediaMetadata.creationTime)).getTime())

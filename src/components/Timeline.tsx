@@ -4,10 +4,13 @@ import { CachedGooglePhotosMediaItem } from '../lib/media-cache'
 import { groupByDay } from '../utils/sort-media-items'
 import TimelineControls from './TimelineControls'
 import TimelineItemGroup from './TimelineItemGroup'
+import { isArchived } from '../utils/config'
 
 export default function Timeline({ sortedMediaItems, isVisible, activeMediaItemId, setActiveMediaItemId, activeItemRef, isScrollingUserControlled, setActiveMediaItemIdWithScrollTo }: { sortedMediaItems: CachedGooglePhotosMediaItem[], isVisible: boolean, activeMediaItemId?: string, setActiveMediaItemId: Dispatch<SetStateAction<string|undefined>>, activeItemRef?: MutableRefObject<HTMLElement|null>, isScrollingUserControlled: boolean, setActiveMediaItemIdWithScrollTo: (activeItemId: string|undefined) => void }) {
   const itemsByDay = groupByDay(sortedMediaItems)
-  const sortedDays = Object.keys(itemsByDay).sort().reverse()
+  const sortedDays = isArchived()
+    ? Object.keys(itemsByDay).sort()
+    : Object.keys(itemsByDay).sort().reverse()
 
   const visibleItemIds = useRef<string[]>([])
   const [itemVisibilityObserver, setItemVisibilityObserver] = useState<IntersectionObserver|undefined>()

@@ -1,12 +1,15 @@
-import { sortByTimeDescending } from '@/utils/sort-media-items'
+import { sortByTimeAscending, sortByTimeDescending } from '@/utils/sort-media-items'
 import { MouseEventHandler, MutableRefObject, useRef } from 'react'
 import { CachedGooglePhotosMediaItem } from '../lib/media-cache'
 import { getLocationLabel } from '../lib/media-item-enrichment'
 import { formatInDisplayTimeZone } from '../utils/date'
 import TimelineItem from './TimelineItem'
+import { isArchived } from '../utils/config'
 
 export default function TimelineItemGroup({ items, activeItemId, activeItemRef, setActiveItemId, itemVisibilityObserver, setActiveMediaItemIdWithScrollTo }: { items: CachedGooglePhotosMediaItem[], activeItemId?: string, activeItemRef?: MutableRefObject<HTMLElement|null>, setActiveItemId: (activeItemId: string|undefined) => void, itemVisibilityObserver?: IntersectionObserver, setActiveMediaItemIdWithScrollTo: (activeItemId: string|undefined) => void }) {
-  const sortedItems = sortByTimeDescending(items)
+  const sortedItems = isArchived()
+    ? sortByTimeAscending(items)
+    : sortByTimeDescending(items)
 
   // Use any item's creation time as the date source, as they are already grouped to the same date.
   const date = sortedItems.length ? sortedItems[0].mediaMetadata.creationTime : null

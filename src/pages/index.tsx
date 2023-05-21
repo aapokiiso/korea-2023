@@ -5,10 +5,11 @@ import { getCoordinates, getLocationLabel } from '../lib/media-item-enrichment'
 import { CachedGooglePhotosMediaItem, cacheItems } from '../lib/media-cache'
 import { useEffect, useRef, useState, lazy, Suspense } from 'react'
 import Timeline from '../components/Timeline'
-import { sortByTimeDescending } from '../utils/sort-media-items'
+import { sortByTimeAscending, sortByTimeDescending } from '../utils/sort-media-items'
 import MapControls from '../components/MapControls'
 import { scrollIntoView } from '../utils/scroll-into-view'
 import { parseToPx, resolveTailwindConfig } from '../utils/css'
+import { isArchived, isSampleMetadata } from '../utils/config'
 
 const tailwindConfig = resolveTailwindConfig()
 
@@ -169,16 +170,20 @@ export async function getStaticProps() {
     } while (pageToken)
 
     const validMediaItems = allMediaItems
-      // TODO: remove debug
-      // .map(mediaItem => ({
-      //   ...mediaItem,
-      //   description: `--\nLocation: Foobar\nCoordinates: (${Math.random() * 180 - 90},${Math.random() * 360 - 180})\n`,
-      // }))
+      .map(mediaItem => isSampleMetadata()
+        ? ({
+          ...mediaItem,
+          description: `--\nLocation: Somewhere\nCoordinates: (${Math.random() * 180 - 90},${Math.random() * 360 - 180})\n`,
+        })
+        : mediaItem
+      )
       .filter(mediaItem => getLocationLabel(mediaItem) && getCoordinates(mediaItem))
 
     const cachedMediaItems = await cacheItems(validMediaItems)
 
-    sortedMediaItems = sortByTimeDescending(cachedMediaItems)
+    sortedMediaItems = isArchived()
+      ? sortByTimeAscending(cachedMediaItems)
+      : sortByTimeDescending(cachedMediaItems)
   }
 
   return {
