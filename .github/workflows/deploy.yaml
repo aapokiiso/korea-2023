@@ -39,6 +39,7 @@ jobs:
           GOOGLE_PHOTOS_ALBUM_ID: "${{ vars.GOOGLE_PHOTOS_ALBUM_ID }}"
           NEXT_PUBLIC_DISPLAY_TIMEZONE: "${{ vars.NEXT_PUBLIC_DISPLAY_TIMEZONE }}"
           NEXT_PUBLIC_MAPBOX_TOKEN: "${{ vars.NEXT_PUBLIC_MAPBOX_TOKEN }}"
+          NEXT_PUBLIC_ARCHIVED: "${{ vars.NEXT_PUBLIC_ARCHIVED }}"
       - uses: google-github-actions/auth@v1
         with:
           credentials_json: "${{ secrets.GOOGLE_DEPLOY_SA_KEY }}"
