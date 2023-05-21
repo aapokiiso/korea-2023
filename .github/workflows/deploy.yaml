@@ -44,4 +44,4 @@ jobs:
         with:
           credentials_json: "${{ secrets.GOOGLE_DEPLOY_SA_KEY }}"
       - uses: google-github-actions/setup-gcloud@v1
-      - run: "gsutil rsync -r -d out gs://${{ vars.GOOGLE_STORAGE_BUCKET_NAME }}"
+      - run: "gsutil -m rsync -r -d out gs://${{ vars.GOOGLE_STORAGE_BUCKET_NAME }}"
